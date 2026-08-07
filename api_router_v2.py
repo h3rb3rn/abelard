@@ -167,11 +167,11 @@ class ProjectCreate(BaseModel):
     agent_ids: list[str] = []
     moderator_goal: str = ""
     moderator_interval: int = Field(default=3, ge=1)
-    max_rounds: int = Field(default=15, ge=1, le=100)
-    max_duration_minutes: Optional[int] = Field(default=None, ge=1, le=480)
+    max_rounds: int = Field(default=15, ge=1, le=500)
+    max_duration_minutes: Optional[int] = Field(default=None, ge=1, le=1440)
     llm_endpoint_id: Optional[str] = None
     agent_selection_mode: str = Field(default="manual", pattern="^(manual|auto)$")
-    auto_agent_count: int = Field(default=4, ge=2, le=12)
+    auto_agent_count: int = Field(default=4, ge=2, le=60)
 
 
 class ProjectRead(BaseModel):
@@ -891,12 +891,12 @@ class ProjectUpdate(BaseModel):
     motion: Optional[str] = None
     agent_ids: Optional[list[str]] = None
     moderator_goal: Optional[str] = None
-    moderator_interval: Optional[int] = None
-    max_rounds: Optional[int] = None
-    max_duration_minutes: Optional[int] = None
+    moderator_interval: Optional[int] = Field(default=None, ge=1)
+    max_rounds: Optional[int] = Field(default=None, ge=1, le=500)
+    max_duration_minutes: Optional[int] = Field(default=None, ge=1, le=1440)
     llm_endpoint_id: Optional[str] = None
     agent_selection_mode: Optional[str] = Field(default=None, pattern="^(manual|auto)$")
-    auto_agent_count: Optional[int] = Field(default=None, ge=2, le=12)
+    auto_agent_count: Optional[int] = Field(default=None, ge=2, le=60)
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectRead)
@@ -1005,7 +1005,7 @@ async def _run_auto_selection(
 @router.post("/projects/{project_id}/suggest-agents")
 async def suggest_agents_for_project(
     project_id: str,
-    count: Optional[int] = Query(None, ge=2, le=12),
+    count: Optional[int] = Query(None, ge=2, le=60),
     apply: bool = Query(False, description="Auswahl direkt als Projekt-Agenten anlegen"),
     current_user: User = Depends(_get_current_user),
     db: AsyncSession = Depends(get_db),

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 CATALOG_BIO_CHARS = 220
 MIN_AGENTS = 2
-MAX_AGENTS = 12
+MAX_AGENTS = 60
 SELECTION_MAX_TOKENS = 3000
 
 SELECTION_PROMPT = """\

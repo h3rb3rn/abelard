@@ -1447,12 +1447,12 @@ async function showCreateProjectModal() {
             </div>
             <div>
               <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Runden (Limit)</label>
-              <input type="number" id="pj-max-rounds" value="15" min="1" max="100" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <input type="number" id="pj-max-rounds" value="15" min="1" max="500" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
               <span class="text-[9px] text-slate-400">Max Runden</span>
             </div>
             <div>
               <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Zeit (Minuten)</label>
-              <input type="number" id="pj-max-duration" placeholder="0 = unbegrenzt" min="0" max="480" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <input type="number" id="pj-max-duration" placeholder="0 = unbegrenzt" min="0" max="1440" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
               <span class="text-[9px] text-slate-400">0 für unbegrenzt</span>
             </div>
           </div>
@@ -1496,11 +1496,11 @@ async function submitProject() {
     auto_agent_count: mode.auto_agent_count
   });
 
-  if (res) {
+  if (res && !res._error) {
     closeModal();
     navigate("projects");
   } else {
-    alert("Fehler beim Erstellen des Projekts");
+    alert("Fehler beim Erstellen des Projekts: " + (res && res.detail ? res.detail : "Unbekannter Fehler"));
   }
 }
 
@@ -1523,7 +1523,7 @@ function agentModeBlock(prefix, mode, count) {
       </div>
       <div id="pj-${prefix}-count-wrap" class="${isAuto ? '' : 'hidden'} flex items-center gap-2">
         <label class="text-[11px] text-slate-300">Anzahl Teilnehmer</label>
-        <input type="number" id="pj-${prefix}-count" value="${count}" min="2" max="12" class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        <input type="number" id="pj-${prefix}-count" value="${count}" min="2" max="60" class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
         <span class="text-[10px] text-slate-500">Analyse läuft über dein Standard-LLM aus dem Profil</span>
       </div>
     </div>`;

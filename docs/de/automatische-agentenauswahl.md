@@ -68,7 +68,7 @@ Beispielantwort:
 | Feld | Werte | Default |
 |------|-------|---------|
 | `agent_selection_mode` | `manual` \| `auto` | `manual` |
-| `auto_agent_count` | 2–12 | 4 |
+| `auto_agent_count` | 2–60 | 4 |
 
 ## Dashboard
 
