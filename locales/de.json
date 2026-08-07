@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Abelard",
+    "subtitle": "Autonome Multi-Agenten Debattenplattform",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "email": "E-Mail Adresse",
+    "password": "Passwort",
+    "name": "Name"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "agents": "1. Agenten",
+    "projects": "2. Projekte",
+    "debates": "3. Live Arena",
+    "connections": "LLM Verbindungen",
+    "knowledge": "Wissen / GraphRAG"
+  },
+  "agents": {
+    "title": "Philosophische Agenten",
+    "new_agent": "Neuer Agent",
+    "presets": "Schnell-Vorlagen",
+    "name": "Agent Name",
+    "prompt": "Philosophischer Persona Prompt",
+    "provider": "LLM Provider",
+    "model": "Modellname",
+    "save": "Agent Speichern"
+  },
+  "projects": {
+    "title": "Debattenprojekte",
+    "new_project": "Neues Projekt",
+    "name": "Projekt Name",
+    "motion": "Philosophisches Thema / Motion",
+    "assign_agents": "Agenten zuweisen",
+    "moderator_goal": "Ziel für die Diskussion (Moderator Steering Goal)",
+    "moderator_interval": "Intervall für Moderation (Turns)",
+    "save": "Projekt Erstellen",
+    "start_debate": "Debatte Starten"
+  },
+  "debates": {
+    "title": "Debatten Live Arena",
+    "stop": "Debatte Stoppen",
+    "open_arena": "Arena Öffnen"
+  },
+  "view": {
+    "theme": "Design-Modus",
+    "dark": "Dunkel",
+    "light": "Hell",
+    "grid": "Kacheln",
+    "list": "Liste"
+  }
+}

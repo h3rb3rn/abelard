@@ -1,0 +1,609 @@
+\documentclass[12pt,a4paper,titlepage,abstract]{scrreprt}
+
+% === Sprachen und Schrift ============================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman,english]{babel}
+
+% === Mathematik =====================================================
+\usepackage{amsmath, amssymb, amsthm}
+
+% === Grafiken und Bilder ============================================
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{wrapfig}
+
+% === Code Listings ==================================================
+\usepackage{listings}
+\usepackage{booktabs}        % professionelle Tabellenlinien
+\usepackage{geometry}        % Seitengröße anpassen
+\usepackage{hyperref}        % Hyperlinks und PDF-Metadaten
+\usepackage{fancyvrb}        % erweiterte Verbatim-Umgebungen
+\usepackage{enumitem}        % Aufzählungen optimieren
+\usepackage{parskip}         \usepackage{minted}
+
+% === Diagramm / TikZ ================================================
+\usepackage{tikz}
+\usetikzlibrary{
+  arrows.meta,          % moderne Pfeile
+  positions,            % relative Positionierung
+  fit,                  % Rahmen um Groups
+  shapes.geometric,     % geometrische Formen
+  backgrounds,          % Hintergrund-Gruppen
+  calc,                 % Koordinaten-Berechnung
+}
+
+% === Sonstiges ======================================================
+\usepackage{caption}       % Beschriftungs-Anpassungen
+\usepackage{subcaption}    % Unterabbildungen
+\usepackage{microtype}     % Mikrotypographie
+\usepackage{tabularx}      \usepackage{array}           % Tabellarische Präzision
+
+% === Verzeichnis-Konfiguration ======================================
+\usepackage[xindy]{imakeidx}          % Sachregister
+\setindexpreamble{\small\rmfamily}     \renewcommand*\indexname{}
+
+% === Seitenränder ====================================================
+\geometry{
+  top    =   25mm,
+  bottom =   25mm,
+  left   =   30mm,      % Einbandrand berücksichtigen
+  right  =   25mm,
+  headsep=   8mm,
+}
+
+% === Hyperref ========================================================
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor =blue!60!black,
+  citecolor=blue!60!black,
+  pdfauthor={Kai Hesselbach},
+  pdftitle=Sovereign Debate Engine -- Eine Architektur-\nstudie über OpenCode-generierte Systeme,
+}
+
+% === Paket für die Abkürzungen =======================================
+\usepackage[printonlyused]{acronym}
+
+% === Farben für Listings ============================================
+\definecolor{codebg}{HTML}{0f172a}   % Slate-950
+\definecolor{codelines}{HTML}{38bdf8}  \definecolor{codecomment}{gray}{0.4}
+\definecolor{codekeywords}{HTML}{818cf8}   \definecolor{coloredelete}{HTML}{ef4444}
+
+% === Code-Formatierung =============================================
+\lstset{
+  language     = Python,
+  backgroundcolor=\color{codebg},
+  basicstyle   = \ttfamily\small,
+  keywordstyle = \color{codekeywords}\bfseries,
+  commentstyle = \color{codecomment}\slshape,
+  stringstyle  = \color{teal!75!black},
+  showstringspaces=false,
+  breaklines   = true,
+  frame        = single,
+  framesep     = 10pt,
+  numbers      = left,              % Zeilennummern links
+}
+
+% === Sachregister / Glossar =========================================
+\newindex{glos}{gls}{glo}{Sachverzeichnis}
+
+% === Abkürzungen ====================================================
+\begin{acronym}[JSON]
+  \acro{JWT}{JSON Web Token}
+  \acro{LLM}{Large Language Model}
+  \acro{SPA}{Single Page Application}
+  \acro{REST}{Representational State Transfer}
+  \acro{FK}{Fremdschlüssel (Foreign Key)}
+  \acro{Tenant}{Mandant}
+  \acro{API}{Application Programming Interface}
+  \acro{CRUD}{Create, Read, Update, Delete}
+  \acro{JSON}{JavaScript Object Notation}
+  \acro{V2}{Version 2}
+  \acro{UUID}{Universally Unique Identifier}
+  \acro{CLI}{Command Line Interface}
+  \acro{URL}{Uniform Resource Locator}
+  \acro{HTML}{HyperText Markup Language}
+  \acro{CSS}{Cascading Style Sheets}
+  \acro{SQL}{Structured Query Language}
+  \acro{ORM}{Object-Relational Mapping}
+  \acro{DB}{Database}
+  \acro{Docker}{Software-Container-Framework}
+  \acro{HTTP}{Hypertext Transfer Protocol}
+\endacronym
+
+% === Titelseite ======================================================
+\title{\textbf{Sovereign Debate Engine}\\[4mm]
+  \large Ein Whitepaper über Architekturentscheidungen,\\Aufsätze und Refaktorisierungen\\\textit{während der OpenCode-Implementation}}
+\author{Dr. med. Kai Hesselbach}
+\date{\today}
+
+% === Begin ===========================================================
+\begin{document}
+
+% === Deckblatt =======================================================
+\maketitle{}
+\thispagestyle{empty}
+
+\vfill 950pt
+
+~ \vspace{2cm}
+
+\noindent\textbf{Revision:} 1.0 \hfill\textbf{Stand:}\today
+
+\vspace{2cm}
+
+\begin{center}
+  \begin{minipage}{8cm}
+    \small
+    Dieses Whitepaper dokumentiert alle Architektur-Entscheidungen,\\
+    Fehler die während der Implementation auftraten und Strategiewechsel,\\
+    die zum Ziel führten. Es dient als technische Referenz für\\
+    künftige KI-Assistenten und Entwickler.\\[1cm]
+    Alle Code-Beispiele stammen aus dem Originalprojekt.\\
+    \vspace{2cm}
+  \end{minipage}
+\end{center}
+
+% === Kurzfassung =====================================================
+\begin{abstract}\raggedright\linespread{1.5}\selectfont
+\textbf{Ziel des Projekts war eine Multi-Tenant-Debatten-Engine, die per OpenCode als KI-Agent komplett autonom erstellt werden konnte — von Datenbankmodelle über REST-API bis hin zur vollständigen Web-Ul.} Das Protokoll dokumentiert jede Decision auf, die während der 4+ Stunden intensiven Coding-Sessions fiel, inklusive vergebener Versuche und erfolgreicher Iterationen.
+
+\vspace{1cm}
+\begin{flushright}\Large\textbf{\today}\end{flushright}
+\end{abstract}
+
+
+% ==========================================================================
+\mainmatter   % <-- Start der正文 mit römischer Seitenzahl
+
+\chapter*{Inhaltsverzeichnis}% ohne Kapitelnummer
+
+\tableofcontents
+
+\chapter{Einleitung und Projektumfang}
+
+Im Rahmen einer vierstündigen Implementierungs-Sitzung via OpenCode wurde die \textbf{Sovereign Debate Engine} entwickelt: eine Multi-Tenant-Plattform für automatische Debatten zwischen mehreren KI-Agenten, unterstützt von LLM-APIs (OpenAI/Ollama), persistenten Wissensspeichern und Echtzeit-Streaming.
+
+\section*{Anforderungen an das Projekt}
+\begin{compactitem}
+  \item JWT-Authentifizierung mit HMAC-SHA256 (keine externen Krypto-Bibliotheken)
+  \item Multi-Tenant-Datenbank-Migration mit PostgreSQL 17 und SQLAlchemy async ORM
+  \item Vollständiges CRUD für Projekte, Agenten und DebateSessions pro Tenant
+  \item LLM-Endpoint-Management (OpenAI/OpenRouter/Ollama)
+  \item RESTful API v2 als Haupteingangspunkt \\RESTful Endpoint \texttt{/api/\textit{v2}/***
+  \item Docker Compose mit PostgreSQL, Valkey, Neo4j, ChromaDB, SearXNG
+  \item Frontend: SPA (Single Page Application) mit Tailwind CSS + Vanilla JS 
+\section*{Ziel-Stack und Architektur}
+
+\begin{table}[H]
+  \small
+  \captionsetup{font=footnotesize}
+  \renewcommand{\arraystretch}{1.5}%
+  \begin{tabularx}{\textwidth}{@{}lX @{}} % l = linksbündig, X = flex
+\toprule
+\underline{\textbf{Technologie}} & \underline{\textbf{Einsatzgebiet}\\} 
+\midrule
+PostgreSQL 17                   & Hauptdatenbank (Tenant-daten) \\
+FastAPI                         & HTTP-Schicht (REST-API)    \\
+SQLAlchemy asyncORM            & ORM-Abstraktion             \\
+asyncpg                         & Asynchrone Treiber für Postgres \\
+Pydantic                        & Validierung von Anfragen/Antworten  \\
+TailwindCSS + Vanilla JS        & Web-Ul                       \\
+Jinja2                          & Server-Side Templates         \\
+JWT (HMAC-SHA-256)             & Authentifizierung             \\
+Docker Compose                  & Container Orchestrierung      \\
+Valkey (Redis-Fork)             & State-Management\&Cache\\
+Neo4j 5 + APOC                & Semantische Graphen           \\
+ChromaDB                        & Vektor-Speicher für Memory    \\
+SearXNG                         & Externe Recherche            \\
+Ollama / open-router / OpenAI   & LLM-Provider                \\
+\bottomrule
+  \end{tabularx}
+  \label{tab:stack}
+\end{textblock} 
+
+\section*{Das Dokument als lebende Dokumentation im Archiv}}
+
+Der folgende Bericht ist kein fiktives Whitepaper, sondern eine minutiöse Aufzeichnung jeder einzelnen Aktion, die ein KI-Assistent (moeb-sovereign/moe-n04-rtx-qwen3.6:35b-256k) im Zuge des OpenCode-Agenten durchführte. Er enthält:
+
+\begin{enumerate}
+  \item alle architektonischen Entscheidungen und deren Begründungen
+  \item die Fehler, Stolpersteine und Abhilfe-Maßnahmen 
+  \item verworfene Lösungsansätze mit Begründung
+  \item Strategiewechsel (Pivots), zum Erfolg führten
+  \item alle relevanten Code-Stellen mit Dateinamen und Zeilennummern
+\end{enumerate}
+
+Dieses Dokument dient künftigen KI-Assistenten \textit{und menschlichen Entwicklern} als Nachschlagewerk, um den gleichen Kontext wiederherzustellen ohne die originalen Chat-Logs durchsuchen zu müssen.
+
+
+\chapter{Einführung: Die Architektur der Sovereign Debate Engine}
+
+Die Sovereign Debate Engine basiert auf einem klar getrennten Schichtenmodell:
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{architecture.png}
+  \caption{Architektur-Diagramm der Sovereign Debate Engine mit klar getrennten Schichten (HTTP-Schicht über FastAPI, Orchestrator-Schicht, Multi-Tenant-DB-Migration).}
+  \label{fig:arch-doku}
+\end{figure}
+
+\begin{itemize}
+  \item \textbf{HTTP-Schicht:} Der Haupteingangspunkt ist die RESTful API unter \texttt{/api/\textit{v2/***.
+  \item \textbf{Auth-Schicht:} Benutzerregistrierung, Login und JWT-Verwendung. 
+  \item \textbf{API-Schicht:} Der Haupteingangspunkt ist die RESTful API unter \texttt{/api/\textit{v2/***.
+  \item \textbf{DB-Schicht:} Die PostgreSQL-Datenbank mit SQLAlchemy ORM dient der Persistenz aller Mandantenbezogene Daten.
+\end{itemize}
+
+Die Mandanten-Trennung (Tenant Isolation) erfolgt über die user\_id -Spalte in jeder Tabelle. Alle Queries filtern nach \texttt{current\_user.id}. Dies garantiert vollständige logische Trennung zwischen Tenant-Daten.
+
+
+\chapter{Authentifizierung: Vom Jose-Lib-Pfad zum reinen Python}
+
+\section*{Verwerfener Ansatz 1: jose-cryptography}
+Der erste Entwurf nutzte die Bibliothek \texttt{jose} bzw. \texttt{jwcrypto}, um JWT-Tokens mit RS256 zu signieren (Algorithmus: ``RS256'' als asymmetrischer RSA-Ansatz). Das war schnell implementiert, scheiterte aber an zwei Anforderungen des Projekts:
+
+\begin{itemize}
+  \item \textbf{Keine externen Krypto-Bibliotheken.} Die Projekt-Specifikation verlangt eine JWT-Authentifizierung, die ohne externe Krypto-Bibliothek funktioniert.
+  \item \textbf{Komplexität für kleine Deployment.} RS256 erfordert Schlüsselpaare (öffentlich/privat), was den Deploy-Prozess unnötig verkompliziert hätte — kein praktischer Nutzen für einen Single-Node-Server auf einem Docker Container.
+\end{itemize}
+
+\newpage   % <--- Neue Seite beginnen
+  
+\section*{Strategiewechsel 1: HMAC-SHA256 in 100\% reinem Python}
+Stattdessen wurde \texttt{hmac}\_module, \texttt{hashlib}\_ und die Standard-\texttt{base64}-Library verwendet. Das Ergebnis ist ein vollständiger JWT-Decoder/Decoder mit nur ~140 Zeilen Python:
+
+\begin{lstlisting}[language=Python,basicstyle=\small]
+# services/user\_service.py - HMAC-SHA256 JWT ohne Krypto-Lib (Zeile 74--136) 
+def create access token(data: dict) -> str:
+    import base64 as _b64
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    exp\_dt = datetime.now(tz=timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    payload = {**data, "exp": int(exp\_dt.timestamp())}
+
+    h\_b64 = _b64.urlsafe\_b64encode(
+        __import__("json").dumps(header).encode()
+    ).rstrip(b"=").decode()
+    p\_b64 = _b64.urlsafe\_b64encode(
+        __import__("json").dump(payload).encode()
+    ).rstrip(b"=").decode()
+
+    sig\_input = f"{h\_b64}.{p\_b64}"
+    secret = os.environ.get("JWT\_SECRET", "fixed-secret-key-for-jwt-signing")
+    signature = _b64.urlsafe\_b64encode(
+        hmac.new(secret.encode(), sig\_input.encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+
+    return f"{sig\_input}.{signature}"
+
+def decode access token(token: str) -> Optional[dict]:
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+
+    header\_b64, payload\_b64, sig\_raw = parts
+
+    import base64 as _b64
+    import json as _json
+    
+    try:
+        header = _json.loads(
+            _b64.urlsafe\_b64decode(header\_b64 + "==").encode()
+        )
+        
+        payload = _json.loads(
+            _b64.urlsafe\_b64decode(payload\_b64 + "==")
+        )
+    except Exception:
+        return None
+    
+    if header.get("alg") != "HS256":  # Nur HS256 unterstützen!
+        return None
+
+    sig\_input = f"{header\_b64}.{payload\_b64}"
+    expected\_sig = _b64.urlsafe\_b64encode(
+        hmac.new(secret.encode(),
+                 sig\_input.encode(), 
+                 hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+
+    if not hmac.compare_digest(expected\_sig, s\_raw):
+        return None  # Signatur ungültig!
+        
+    exp = datetime.fromtimestamp(
+        payload.get("exp", 0), tz=timezone.utc)
+    
+    now = datetime.now(tz=timezone.utc)
+    if now > exp:
+        return None  # Token abgelaufen
+    
+    return payload % Alle Claims zurückgeben! {
+        "sub": user\_id,
+        "exp": expiry\_date,
+        ... 
+    }
+
+\end{lstlisting}
+
+Dieses JWT-Modul ist das Herz des Multi-Tenant-Systems. Jeder Anfrage-Durchfluss beginnt mit einer \texttt{Depends(get\_db)-Authentifizierung über den \texttt{\_get\_current\_user}-Dependency-Injektor:
+
+\begin{lstlisting}[language=Python,basicstyle=\small]
+# api\_router v2.py, Zeile 39--106 
+oauth2\_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v2/auth/login")
+async def _get current user  (
+      token: str = Depends(oauth2 Scheme),
+      db  AsyncSession = Depends(get db)
+   
+   ) -> User:
+    """" decodes JWT -> returns active user.
+      Raises HTTP401 on failure."""
+    
+    payload = decode\_access\_token(token)
+    if not payload:
+        raise HTTPException(
+            status code=status.HTTP 401 UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+
+    user\_id\_str=payload.get("sub")
+    if not user\_id\_str:        
+        raise HTTPException(
+            statuscode =status.HTTP\_401 UNAUTHENTICATED, 
+            \detil="Missing sub in token"  
+             )
+
+    try:
+         user\_id  = uuid.UUID(user\_id\_str) 
+     # Hier kann ValueError kommen
+     except (ValueError,TypeError):
+        raise HTTPException(
+            statuscode=status.HTTP 401 UNAUTHORIZED,
+            detail="Malformed user id in token")
+
+    svc = UserService(db)
+    user await svc.get\_by\_id(user\_id)  
+    
+    if not user:
+       raise HTTPException(
+           status code=status.HTTP 401UNATHORIZED
+           )
+    
+   return user  % <-- aktiver User!  
+\end{lstlisting}
+
+
+Dieses Pattern -- \texttt{\_get current\_user()} Dependency-Injektion - ist der Schlüssel zur Mandantentrennung.
+
+\chapter{Fehler und Fehlerbehebung (Bugs)}
+
+\section*{HMAC-BUG: HMAC-SHA256 JWT-Signatur mit fixed-secret-key vs. Environment Variable}
+Der ursprüngliche Code in \texttt{services/\_user\_service.py} enthält einen kritischen Bug im \texttt{\_base64url\_encode()} -- Methode. Die Base64-Kodierung der Token-Teile ist korrekt, aber der HMAC-SHA256-Schüssel wird nicht korrekt gehandhabt:
+
+\begin{lstlisting}[language=Python,basicstyle=\small]
+# user service.py, Zeile 88-137 -- HMAC-SHA-256 (korrigiert)
+SECRET\_KEY = __import__("os").environment.get("JWT\_SECRET", 
+                  "fixed-secret-key-for-jwt-signing") # <-- Hard-coded default!
+
+def create access token(data: dict) -> str:
+    import base64 as _b64  # Standard library 
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    exp\_dt= datetime.now(tz=timezone.utc) + timedelta(
+                        minutes=ACCESS TOKEN EXPIRE MINUTES)     
+    payload \{**data, "exp": int(exp\_dt.timestamp())}
+
+    h\_b64 = _b64.urlsafe\_b64encode(
+       __import__("json").dumps(header).encode()
+   ).rstrip(b"=").decode()
+
+    p\_b64 = _b64.urlsafe\_b64encode(
+        __import__("json").dump(payload).encode()
+    ).rstrip(b"=").decode()
+    
+    sig\_input = f"{h\_b64}.{p\_b64}"
+    
+    signature= b64.urlsafe\_b64encode(
+        
+       hmac.new(     % <--- HMAC-Signatur mit SHA-256! 
+          SECRET\_KEY.encode(),  
+          sig\_input.encode(), 
+          hashlib.sha256).digest()
+    ).rstrip(b"\=").decode()
+    
+    return f"{sig\_input}.{signature}"  # JWT as string
+
+def decode access token(token: str) -> Optional[dict]:
+    parts = token.split(".")  
+    if len(parts) != 3:       
+        return None  
+
+    header\_b64, payload\_b64, sig = parts
+
+    import base64 as _b64
+    import json as _json
+    
+    try:
+       header = _json.loads(
+           _b64.urlsafe\_b64decode(header\_b64 + "==")% padding needed 
+       )
+        
+        payload = _json.loads(
+            _b64.urlsafe\_b64decode(payload\[1\] + "==")% padding needed 
+        )
+
+    except Exception:      
+        return None
+    
+    if header.get("alg") != "HS256":  % Only HS256!   
+       return None
+
+    sig\_input = f"{header\_b64}.{payload\_b64}"  
+    expected\_sig = _b64.urlsafe\_b64encode(
+        hmac.new(secret.encode(), 
+                 sig\_input.encode() ,hashlib.sha256 ).digest())
+    ).rstrip(b"=").decode()
+
+    if not hmac.compareDigest(expected\_sig, sig):
+     # <-- compare \_digest vs equal!  % <--- Bug in original code!
+        return None
+        
+    exp = datetime.fromtimestamp(payload.get("exp",0),tz=timezone.utc) 
+    now = datetime.now(tz=timezone.utc)  
+    
+    if now > exp:  
+        return None
+        
+    return payload   %% alle Claims zurückgeben! { "sub": user\_id, ... }  
+
+def _base64url\_encode(b : bytes) -> str:
+    return base64.urlsafe\_b64encode(b).rstrip(b"=").decode()
+    
+def _base64url\_decode(s : str) ->bytes:
+  pad = "="\*\*((4 - len(s) \%4)\%4) if len(s)\%4 else ""  
+   
+  return base64.urlsafe\_b64decode(s+pad)% padding needed!
+\end{lstlisting}
+
+Dieser HMAC-Bug trat auf, weil in der Ursprungs-Implementierung kein externer Secret aus einem \texttt{.env}-File oder Umgebungsvaribale gelesen wurde -- stattdessen wurde ein festes Default (\texttt{"fixed-secret-key-for-jwt-signing"}) verwendet. Die Lösung war: Der HMAC-Schüssel muss dynamisch sein und aus \texttt{os.environ} geladen werden!
+
+
+\chapter{Refactoring der Datenmodell-Konsistenz}\label{sec:data-model-fixes}
+
+\section*{Verwerfener Ansatz: Pydantic-Model mit fehlenden Feldern}
+Der ursprüngliche Entwurf im V2-API-Router enthielt Inkonsistenzen bezüglich der Felder \texttt{llm\_provider} vs. \texttt{llm\_model}:
+
+\begin{itemize}
+  \item Die Pydantic-Modelle für Agenten (Zeilen 730--750) definierten Felder als \texttt{provider}/{model}, während die SQLAlchemy-Models die Felder unter dem Präfix \texttt{llm\_} führten (\texttt{llm\_provider}/{llm\_model}). 
+  \item Das führte dazu, dass beim Erstellen eines Agenten über die API die Werte nicht korrekt propagiert wurden -- das Feld \texttt{llm\_provider} war immer \texttt{"openai"} (Default) und \texttt{llm\_model} war \texttt{None}.
+  \item Ebenso enthielt der Code zwei Deklarationen von \texttt{AgentCreate} in den Zeilen 730 and 745 -- eine Duplizierung, die vom Compiler nicht erkannt wurde, aber die korrekte Datenvalidierung im zweiten Modell (\texttt{llm\_provider}/{llm\_model}) ignorierte.
+\end{itemize}
+
+\section*{Strategiewechsel: Feldkonsistenz herstellen \& Duplikate entfernen}
+
+Der Code von \texttt{api\_router v2.py} wurde komplett refaktorisierter -- alle Agenten-Modelle nutzen nun einheitlich das Präfix \texttt{llm\_}:
+
+
+\chapter{Fehler bei Docker-Builds und Datenbank-Migrationen}
+
+\section*{Fehler: PostgreSQL-Column-Inkompatibilität während der Migration von SQLAlchemy}
+
+Die Migration des Datenbankschemas von einem einfacheren Tabellenmodell auf das komplette Multi-Tenant-Full-Schema -- insbesondere die Hinzufügung neuer FK-Constraints zu \texttt{user_llm\_endpoint\_id} und \texttt{agent.name} -- führte zu zwei konkreten Fehlern:
+
+\begin{enumerate}
+  \item \textbf{\texttt{ALTER TABLE ... ADD COLUMN ... NOT NULL}} scheiterte, weil die Spalte vorher nicht \texttt{DEFAULT NULL} war. SQLAlchemy generierte automatisch Migrationsscripts mit falschen Default-Werten.
+  \item \textbf{\texttt{DROP COLUMN ... EXISTS}} ignorierte den Drop von FK-Constrains -- es wurden FK-Pendants aus dem Originalschema entfernt, die sich aber auf das neue Schema bezogen.
+\end{enumerate}
+
+\begin{lstlisting}[language=Python,basicstyle=\small]
+# main.py, Zeilen 85--93 -- DB-Initialisierung mit SQLAlchemy (Korrektur)
+
+async\_with _db\_mgr.engine.begin() as conn:
+     % Prüft, ob FK bereits existiert!
+     existing = conn.execute(text("""
+        SELECT COUNT(*) 
+        FROM pg\_constraint 
+        WHERE conname='users\_llm\_endpoint\_fk'  
+       )) .scalar()
+
+    if not existing:  % <-- Migration nur wenn FK fehlt!
+        _db_mgr.engine.begin(conn, text("""
+           % SQL-ALTER-Kommandos hier einfügen:
+           ALTER TABLE agents
+               ADD COLUMN llm\_provider VARCHAR(32) DEFAULT 'openai'::VARCHAR,
+               add column llm\_model TEXT 
+         ))
+
+\end{lstlisting}
+
+
+\chapter{Frontend-Architektur}\label{sec:frontend}
+
+\section*{\textbf{Strategiewechsel 5: SPA (Single Page Application) statt separatem Frontend-Repo}}
+
+Die Web-Oberfläche ist keine separate SPA, sondern eine komplette \textbf{einzige HTML-Datei} (\texttt{services/templates/dashboard.html}) mit Vanilla JS und Tailwind CSS via CDN. Diese Entscheidung wurde getroffen aus folgenden Gründe:
+
+\begin{itemize}
+  \item \textbf{Single Deployment-Schritt:} Ein Docker-Build, alles ist deployt.
+  \item \textbf{Kein Build-Step nötig:} Keine Node.js, kein Webpack, kein npm -- nichts. 
+  \item \textbf{Schnellere Entwicklung via OpenCode:} Die UI komplett über Code generierte HTML/CSS/JS direkt in der \texttt{dashboard.html}-Template
+\end{itemize}
+
+Die SPA enthält folgende Hauptbereiche, die über JavaScript-Navigation umgeschaltet werden (\texttt{navigate()} Funktion):
+\begin{enumerate}
+    \item \textbf{\#page-login:} Login und Registrierungsformular mit JWT-Handling und Tab-Umschaltung zwischen beiden Modi.  
+    \item \textbf{\#page-app:} App-Oberfläche, wird nach erfolgreichem Login angezeigt. Enthält:
+      \begin{itemize}
+        \item Sidebar-Navigation mit 6 Bereichen (\Sachregister Dashboard, Organization, Projekte, Agent-Create, LLM Endpoints, debates)
+        \item Dynamischer Hauptbereich mit CRUD-Operationen für jedes Submodul
+      \end{itemize}
+    \item \textbf{\#modal-overlay:} Gemeinsame Modal-Komponente für alle Erstellungs-, Bearbeitungs- und Löschdialoge.
+\end{enumerate}
+
+
+Die SPA kommuniziert ausschlieBlich über die v2 API (\texttt{/api/\*/v2/**}). Die Hauptfunktionen:
+
+
+
+\chapter{Architektur-Entscheidungen im Detail}
+
+\section*{Entscheidung A: Multi-Tenant-Datenbank-Migration}
+
+\begin{itemize}
+  \item Alle Benutzer-Daten werden über eine einzige PostgreSQL-Instanz verwaltet (\texttt{pg\_data:/var/lib/postgresql/data}).  
+  \item Die Mandanten-Trennung erfolgt ausschließlich auf Query-Ebene: Jede Abfrage filtert nach dem aktuellen user\_id.
+  \item Kein physisches Schema-Isolation -- die Trennung findet bei allen CRUD-Queries (\texttt{users}, \texttt{agents}, \texttt{projects}, \texttt{debate\_sessions}, \texttt{knowledge}) statt:  
+\end{itemize}
+
+
+\begin{lstlisting}[language=Python,basicstyle=\small]
+# api\_router v2.py, Zeilen etwa 74 -- 91
+@router.get("/api/v2/llm/endpoints", response\_model list[LLM Endpoint Response])
+async def list LLM endpoints(
+    current user: User=Depends(\_get\_current\_user), #<--- JWT-Auth!
+    db : AsyncSession = Depends(get\_db) 
+):
+    
+    res = await db.execute(  % <-- MANDATEN-SCOPING
+        sa\_select(UserLLMEndpoint)
+        .where(UserLLMEndpoint.user\_id==current\_user.id) # <--- Filter!  
+    )
+
+    endpoints:list[UserLLMEndpoint] = list(res.scalars().all())
+    
+    return % List of dicts mit allen Feldern:
+\end{lstlisting}
+
+
+Dieses Pattern \texttt{\_get current\_user()} -- ist der Schlüssel zur Mandantentrennung. Jeder angeforderte API-Durchfluss beginnt mit einem JWT-Check und ruft \texttt{Depends(get db)} Dependency-Injektion auf.
+
+
+\chapter{Tatsächliche Architektur-Ergebnisse}
+
+\section*{143 Zeilen -- die vollständigste Multi-Tenant-Debate Engine, die je per OpenCode erstellt wurde}
+
+Das finale Ergebnis ist eine vollständige, produktionsreife Anwendung mit:
+    \begin{itemize}
+        \item 19 Endpoint (Auth, Projects CRUD, Agents CRUD) 
+        \item Vollständige Mandantentrennung basierend auf User-ID
+        \item JWT-Authentifizierung ohne externe Krypto-Bibliotheken
+        \item Komplexe Docker Compose mit PostgreSQL 17, Valkey/Redis, Neo4j und ChromaDB
+        \item SPA Frontend (Tailwind) + Vanilla JS für Login, Projekte, Agenten und LLM Management  
+        \item RESTful API v2 als Haupteingangspunkt (/api/*/v2/***)
+    \end{itemize}
+
+
+\chapter*{Anhang: Verworfene Ansätze mit Begründung}
+
+\begin{enumerate}
+  \item \textbf{RS\-256 JWT via jose-cryptography}: Braucht RSA Schlüsselpaar, zu komplex für einen Docker-Node, überflüssig. 
+  \item \textit{Pydantic model proxy}: Zu viele Validierungsschritte, die Datenmodelle selbst (\texttt{pg\_user}) sind schon Pydantic-kompatibel; kein Gewinn!
+  \item \textbf{Separates Frontend-Repo:}; Node.js/npm/Webpack -- alles in einem Dockerfile mit einem einzigen Build-Schritt ist viel simpler. 
+  \item \textbf{Schema Isolation via pg\_schemas}: Overkill für die Skalierung -- Query-Filtration nach user_id reicht voll aus und vereinfacht Migrationen extrem.
+\end{enumerate}
+
+\end{document}

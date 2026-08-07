@@ -1,0 +1,55 @@
+# === Geheimnisse & lokale Konfiguration ===
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+!docker-compose.override.yml.example
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+
+# === Laufzeitdaten ===
+data/
+chroma-data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# === Python ===
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# === Node / Tailwind-Build ===
+node_modules/
+
+# === Dokumentation (Build-Output) ===
+site/
+
+# === Editor & OS ===
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# === Assistenten-Kontext (nicht veroeffentlichen) ===
+.claude/
+.codex/
+.agents/
+
+# === Temporaeres ===
+*.bak
+*.orig
+tmp_*

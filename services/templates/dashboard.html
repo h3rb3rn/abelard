@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="de" class="dark h-full bg-slate-950 text-slate-100 font-sans antialiased">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Abelard — Multi-Agent Debate Platform</title>
+  <!-- Local Tailwind CSS -->
+  <link rel="stylesheet" href="/static/css/tailwind.css"/>
+  <style>
+    /* Custom scrollbars & glassmorphism accents */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.2);
+    }
+    .pulse-dot {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(1.15); }
+    }
+
+    /* Light Mode Theme Overrides */
+    html.light, html.light body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    html.light #page-login {
+      background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%) !important;
+    }
+    html.light .glass-card {
+      background: rgba(255, 255, 255, 0.9) !important;
+      backdrop-filter: blur(16px) !important;
+      border-color: rgba(226, 232, 240, 0.9) !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03) !important;
+      color: #0f172a !important;
+    }
+    html.light .glass-card-hover:hover {
+      border-color: rgba(99, 102, 241, 0.5) !important;
+      box-shadow: 0 12px 30px -5px rgba(99, 102, 241, 0.15) !important;
+    }
+    html.light aside {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light main {
+      background-color: #f8fafc !important;
+    }
+    html.light .text-white, html.light .text-slate-100, html.light .text-slate-200 {
+      color: #0f172a !important;
+    }
+    html.light .text-slate-300, html.light .text-slate-400 {
+      color: #334155 !important;
+    }
+    html.light .text-slate-500 {
+      color: #64748b !important;
+    }
+    html.light .bg-slate-900, html.light .bg-slate-950 {
+      background-color: #f1f5f9 !important;
+    }
+    html.light .bg-slate-900\/90, html.light .bg-slate-950\/60, html.light .bg-slate-950\/80, html.light .bg-slate-950\/90 {
+      background-color: #ffffff !important;
+    }
+    html.light .border-slate-800, html.light .border-slate-800\/80, html.light .border-slate-800\/60, html.light .border-slate-700\/70 {
+      border-color: #e2e8f0 !important;
+    }
+    html.light input, html.light select, html.light textarea {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light input::placeholder, html.light textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+    html.light ::-webkit-scrollbar-track { background: #f1f5f9; }
+    html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+    html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+<!-- Auth Container -->
+<div id="page-login" class="min-h-screen flex items-center justify-center p-4 bg-radial from-slate-900 via-slate-950 to-slate-950">
+  <div class="w-full max-w-md glass-card rounded-2xl p-8 space-y-6 shadow-2xl border border-slate-800">
+    <div class="text-center space-y-2">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-2xl shadow-lg shadow-indigo-500/20 mb-2">
+        SDE
+      </div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-white">Abelard</h1>
+      <p class="text-xs text-slate-400 font-medium">Multi-Agent Philosophical Discussion Platform</p>
+    </div>
+
+    <!-- Auth Tabs -->
+    <div class="flex p-1 bg-slate-900/80 rounded-xl border border-slate-800">
+      <button id="tab-login" onclick="showTab('login')" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-sm">Anmelden</button>
+      <button id="tab-register" onclick="showTab('register')" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Registrieren</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="form-login" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">E-Mail Adresse</label>
+        <input type="email" required id="l-email" placeholder="name@beispiel.de" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/70 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-500"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Passwort</label>
+        <input type="password" required id="l-pass" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/70 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-500"/>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form id="form-register" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 hidden">
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Name</label>
+        <input type="text" id="r-name" placeholder="Ihr Name" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/70 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-500"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">E-Mail Adresse</label>
+        <input type="email" required id="r-email" placeholder="name@beispiel.de" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/70 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-500"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Passwort (min. 8 Zeichen)</label>
+        <input type="password" required minlength="8" id="r-pass" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/70 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-500"/>
+      </div>
+    </form>
+
+    <button id="submit-btn" onclick="handleSubmit()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer">
+      Anmelden
+    </button>
+    <div id="auth-error" class="text-xs text-rose-400 text-center min-h-[1.5rem] font-medium"></div>
+  </div>
+</div>
+
+<!-- Main Application Shell -->
+<div id="page-app" class="hidden h-screen flex overflow-hidden">
+  
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col z-20">
+    <!-- Brand Header -->
+    <div class="p-5 border-b border-slate-800/80 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-500/20">
+        SDE
+      </div>
+      <div>
+        <h2 class="font-extrabold text-sm text-white tracking-tight leading-none">Debate Engine</h2>
+        <span id="sidebar-email" class="text-[11px] text-indigo-400 font-medium truncate block max-w-[130px] mt-1"></span>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto">
+      <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500 px-3 py-1">Hauptmenü</div>
+      
+      <a onclick="navigate('dashboard')" data-page="dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>Dashboard</span>
+      </a>
+
+      <a onclick="navigate('agents')" data-page="agents" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <span>1. Agenten</span>
+      </a>
+
+      <a onclick="navigate('projects')" data-page="projects" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>2. Projekte</span>
+      </a>
+
+      <a onclick="navigate('debates')" data-page="debates" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <span>3. Live Arena</span>
+      </a>
+
+      <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500 px-3 py-1 pt-4">Infrastruktur</div>
+
+      <a onclick="navigate('connections')" data-page="connections" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>LLM Verbindungen</span>
+      </a>
+
+      <a onclick="navigate('knowledge')" data-page="knowledge" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <span>Wissen / GraphRAG</span>
+      </a>
+    </nav>
+
+    <!-- Language & Theme Selector & User Footer -->
+    <div class="p-3 border-t border-slate-800 space-y-2">
+      <div class="flex items-center justify-between px-2 text-xs text-slate-400">
+        <span class="font-medium">Design</span>
+        <button id="theme-toggle-btn" onclick="toggleTheme()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md text-[11px] font-semibold transition flex items-center gap-1.5 cursor-pointer">
+          🌙 Dunkel
+        </button>
+      </div>
+      <div class="flex items-center justify-between px-2 text-xs text-slate-400">
+        <span class="font-medium">Sprache</span>
+        <select id="lang-select" onchange="setLang(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-md px-2 py-1 text-[11px] focus:outline-none cursor-pointer">
+          <option value="de">Deutsch 🇩🇪</option>
+          <option value="en">English 🇬🇧</option>
+        </select>
+      </div>
+      <button onclick="handleLogout()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-semibold transition cursor-pointer">
+        Abmelden
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-8" id="main-content">
+  </main>
+
+</div>
+
+<!-- Global Modal Overlay -->
+<div id="modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+  <div class="glass-card w-full max-w-xl rounded-2xl p-6 shadow-2xl border border-slate-800 max-h-[90vh] overflow-y-auto" id="modal-box">
+  </div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem("jwt_token") || "";
+var API = "/api/v2";
+var currentUser = null;
+var currentPage = "dashboard";
+var currentTab = "login";
+var currentLang = localStorage.getItem("locale") || "de";
+var currentTheme = localStorage.getItem("sde_theme") || "dark";
+var currentViewMode = localStorage.getItem("sde_view_mode") || "grid";
+var activeWebsocket = null;
+var activeDebateId = null;
+
+function initTheme() {
+  if (currentTheme === "light") {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  } else {
+    document.documentElement.classList.remove("light");
+    document.documentElement.classList.add("dark");
+  }
+  updateThemeToggleButtons();
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  localStorage.setItem("sde_theme", currentTheme);
+  initTheme();
+}
+
+function updateThemeToggleButtons() {
+  var btn = document.getElementById("theme-toggle-btn");
+  var isDark = currentTheme === "dark";
+  var label = isDark ? (currentLang === "de" ? "🌙 Dunkel" : "🌙 Dark") : (currentLang === "de" ? "☀️ Hell" : "☀️ Light");
+  if (btn) btn.innerHTML = label;
+}
+
+function setViewMode(mode) {
+  if (mode !== "grid" && mode !== "list") return;
+  currentViewMode = mode;
+  localStorage.setItem("sde_view_mode", mode);
+  navigate(currentPage);
+}
+
+function renderViewModeToggle() {
+  var isGrid = currentViewMode === "grid";
+  var gridLabel = currentLang === "de" ? "Kacheln" : "Grid";
+  var listLabel = currentLang === "de" ? "Liste" : "List";
+  return `
+    <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 shadow-inner">
+      <button onclick="setViewMode('grid')" title="${gridLabel}" class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${isGrid ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span class="hidden sm:inline">${gridLabel}</span>
+      </button>
+      <button onclick="setViewMode('list')" title="${listLabel}" class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${!isGrid ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span class="hidden sm:inline">${listLabel}</span>
+      </button>
+    </div>
+  `;
+}
+
+initTheme();
+
+document.getElementById("lang-select").value = currentLang;
+
+function setToken(t) {
+  if (t) localStorage.setItem("jwt_token", t);
+  else localStorage.removeItem("jwt_token");
+  TOKEN = t;
+}
+
+function showApp() {
+  document.getElementById("page-login").classList.add("hidden");
+  document.getElementById("page-app").classList.remove("hidden");
+  document.getElementById("page-app").classList.add("flex");
+  if (currentUser) document.getElementById("sidebar-email").textContent = currentUser.name || currentUser.email || "";
+}
+
+function hideApp() {
+  document.getElementById("page-login").classList.remove("hidden");
+  document.getElementById("page-login").classList.add("flex");
+  document.getElementById("page-app").classList.add("hidden");
+  document.getElementById("page-app").classList.remove("flex");
+}
+
+function showTab(tab) {
+  currentTab = tab;
+  var btn = document.getElementById("submit-btn");
+  if (tab === "login") {
+    document.getElementById("form-login").classList.remove("hidden");
+    document.getElementById("form-register").classList.add("hidden");
+    document.getElementById("tab-login").className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-sm";
+    document.getElementById("tab-register").className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+    btn.textContent = "Anmelden";
+  } else {
+    document.getElementById("form-login").classList.add("hidden");
+    document.getElementById("form-register").classList.remove("hidden");
+    document.getElementById("tab-register").className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-sm";
+    document.getElementById("tab-login").className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+    btn.textContent = "Registrieren";
+  }
+}
+
+async function handleSubmit() {
+  var btn = document.getElementById("submit-btn");
+  var err = document.getElementById("auth-error");
+  btn.disabled = true;
+  err.textContent = "";
+
+  if (currentTab === "register") {
+    var name = document.getElementById("r-name").value.trim();
+    var email = document.getElementById("r-email").value.trim();
+    var pw = document.getElementById("r-pass").value;
+    try {
+      var r = await fetch(API + "/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, email: email, password: pw })
+      });
+      if (!r.ok) {
+        var d = await r.json().catch(() => ({}));
+        err.textContent = d.detail || "Registrierung fehlgeschlagen";
+        btn.disabled = false; return;
+      }
+      alert("Registrierung erfolgreich! Bitte anmelden.");
+      showTab("login");
+    } catch (e) { err.textContent = e.message; }
+    btn.disabled = false; return;
+  }
+
+  var email = document.getElementById("l-email").value.trim();
+  var pw = document.getElementById("l-pass").value;
+  try {
+    var r = await fetch(API + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ username: email, password: pw })
+    });
+    if (!r.ok) { err.textContent = "Ungültige E-Mail oder Passwort"; btn.disabled = false; return; }
+    var data = await r.json();
+    setToken(data.access_token);
+    currentUser = { email: email };
+    showApp();
+    navigate("dashboard");
+  } catch (e) { err.textContent = e.message || "Netzwerkfehler"; }
+  btn.disabled = false;
+}
+
+function handleLogout() {
+  setToken("");
+  TOKEN = "";
+  currentUser = null;
+  if (activeWebsocket) { activeWebsocket.close(); activeWebsocket = null; }
+  hideApp();
+}
+
+async function api(url, method = "GET", payload = null) {
+  var opts = { method: method, headers: { "Authorization": "Bearer " + TOKEN } };
+  if (payload) {
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(payload);
+  }
+  try {
+    var r = await fetch(API + url, opts);
+    if (!r.ok) {
+      var d = await r.json().catch(function() { return { detail: r.statusText }; });
+      var detailMsg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail);
+      return { _error: true, detail: detailMsg || ("HTTP " + r.status) };
+    }
+    if (r.status === 204) return true;
+    return await r.json();
+  } catch(e) {
+    return { _error: true, detail: e.message || "Netzwerkfehler" };
+  }
+}
+
+function htmlEsc(str) {
+  if (!str) return "";
+  var d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ---- Globale Agenten: Badges & Aktionen ----
+
+function isAdmin() {
+  return !!(currentUser && currentUser.is_admin);
+}
+
+function agentGlobalBadge(a) {
+  if (a.is_global && a.is_owner) {
+    return '<span class="px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/30 text-[10px] font-semibold">🌍 Global freigegeben</span>';
+  }
+  if (a.is_global && !a.is_owner) {
+    return '<span class="px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/30 text-[10px] font-semibold">🌍 Global (fremd)</span>';
+  }
+  return '';
+}
+
+function agentActions(a, compact) {
+  var cls = compact
+    ? { edit: "text-amber-400 hover:text-amber-300 text-[11px] font-semibold cursor-pointer",
+        del:  "text-rose-400 hover:text-rose-300 text-[11px] font-semibold cursor-pointer",
+        glob: "text-violet-400 hover:text-violet-300 text-[11px] font-semibold cursor-pointer",
+        take: "text-sky-400 hover:text-sky-300 text-[11px] font-semibold cursor-pointer" }
+    : { edit: "px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-semibold cursor-pointer",
+        del:  "px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold cursor-pointer",
+        glob: "px-3 py-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/30 rounded-lg text-xs font-semibold cursor-pointer",
+        take: "px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg text-xs font-semibold cursor-pointer" };
+
+  if (!a.is_owner) {
+    return '<button onclick="cloneAgent(\'' + a.id + '\')" class="' + cls.take + '" title="Als eigene, bearbeitbare Kopie übernehmen">📥 Übernehmen</button>';
+  }
+  var html = '';
+  if (isAdmin()) {
+    var label = a.is_global ? '🌍 Freigabe zurückziehen' : '🌍 Global freigeben';
+    html += '<button onclick="toggleAgentGlobal(\'' + a.id + '\', ' + (a.is_global ? 'false' : 'true') + ')" class="' + cls.glob + '">' + label + '</button>';
+  }
+  html += '<button onclick="showEditAgentModal(\'' + a.id + '\')" class="' + cls.edit + '">Bearbeiten</button>';
+  html += '<button onclick="deleteAgent(\'' + a.id + '\')" class="' + cls.del + '">Löschen</button>';
+  return html;
+}
+
+async function toggleAgentGlobal(id, makeGlobal) {
+  var res = await api("/agents/" + id + "/global", "PATCH", { is_global: makeGlobal });
+  if (!res || res._error) {
+    alert("Freigabe fehlgeschlagen: " + (res && res.detail ? res.detail : "Unbekannter Fehler"));
+    return;
+  }
+  navigate("agents");
+}
+
+async function cloneAgent(id) {
+  var res = await api("/agents/" + id + "/clone", "POST", {});
+  if (!res || res._error) {
+    alert("Übernehmen fehlgeschlagen: " + (res && res.detail ? res.detail : "Unbekannter Fehler"));
+    return;
+  }
+  alert("'" + res.name + "' wurde als eigene Kopie übernommen und ist jetzt bearbeitbar.");
+  navigate("agents");
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("locale", lang);
+  navigate(currentPage);
+}
+
+async function navigate(page) {
+  currentPage = page;
+  if (!TOKEN) return;
+
+  document.querySelectorAll(".nav-item").forEach(function(el) {
+    if (el.dataset.page === page) {
+      el.className = "nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 shadow-md shadow-indigo-600/20 transition cursor-pointer";
+    } else {
+      el.className = "nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer";
+    }
+  });
+
+  var container = document.getElementById("main-content");
+  if (page === "dashboard") await renderDashboard(container);
+  else if (page === "agents") await renderAgentsPage(container);
+  else if (page === "projects") await renderProjectsPage(container);
+  else if (page === "debates") await renderDebatesPage(container);
+  else if (page === "connections") await renderConnectionsPage(container);
+  else if (page === "knowledge") await renderKnowledgePage(container);
+}
+
+/* =========================================================================
+   1. Dashboard View
+   ========================================================================= */
+async function renderDashboard(el) {
+  var projects = await api("/projects") || [];
+  var agents = await api("/agents") || [];
+  var debates = await api("/debates") || [];
+  var endpoints = await api("/llm-endpoints") || [];
+
+  var html = `
+    <div class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">System Dashboard</h1>
+          <p class="text-xs text-slate-400 mt-1">Willkommen auf der autonomen Multi-Agenten Debattenplattform</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="navigate('agents')" class="px-4 py-2 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <span>+ Agent Erstellen</span>
+          </button>
+          <button onclick="navigate('projects')" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+            <span>+ Projekt Starten</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 transition">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Agenten</div>
+          <div class="text-3xl font-black text-amber-400 mt-2">${agents.length}</div>
+          <p class="text-[11px] text-slate-500 mt-1">Konfigurierte Personas</p>
+        </div>
+        <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 transition">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Projekte</div>
+          <div class="text-3xl font-black text-emerald-400 mt-2">${projects.length}</div>
+          <p class="text-[11px] text-slate-500 mt-1">Debattenthemen & Ziele</p>
+        </div>
+        <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 transition">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Debatten</div>
+          <div class="text-3xl font-black text-rose-400 mt-2">${debates.length}</div>
+          <p class="text-[11px] text-slate-500 mt-1">Live & Beendete Sitzungen</p>
+        </div>
+        <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 transition">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">LLM Endpunkte</div>
+          <div class="text-3xl font-black text-cyan-400 mt-2">${endpoints.length}</div>
+          <p class="text-[11px] text-slate-500 mt-1">OpenAI & Ollama</p>
+        </div>
+      </div>
+
+      <!-- Quick Setup Stepper Guide -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+          Empfohlener Workflow
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div onclick="navigate('agents')" class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-amber-500/50 cursor-pointer transition group">
+            <div class="text-xs font-bold text-amber-400 group-hover:underline mb-1">Schritt 1: Agenten bauen</div>
+            <p class="text-xs text-slate-400">Erstelle philosophische Personas mit eigenen System-Prompts & Argumentationsweisen.</p>
+          </div>
+          <div onclick="navigate('projects')" class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition group">
+            <div class="text-xs font-bold text-emerald-400 group-hover:underline mb-1">Schritt 2: Thema & Moderator-Ziel</div>
+            <p class="text-xs text-slate-400">Definiere die Motion (These), weise Agenten zu und lege das Moderator-Ziel fest.</p>
+          </div>
+          <div onclick="navigate('debates')" class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-rose-500/50 cursor-pointer transition group">
+            <div class="text-xs font-bold text-rose-400 group-hover:underline mb-1">Schritt 3: Live Arena & Moderation</div>
+            <p class="text-xs text-slate-400">Beobachte in Echtzeit, wie Agenten philosophieren und der Moderator die Diskussion lenkt.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+/* =========================================================================
+   2. Agenten View
+   ========================================================================= */
+async function renderAgentsPage(el) {
+  var agents = await api("/agents") || [];
+
+  var html = `
+    <div class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">Philosophische Agenten</h1>
+          <p class="text-xs text-slate-400 mt-1">
+            ${agents.filter(x => x.is_owner).length} eigene${agents.filter(x => !x.is_owner).length > 0 ? ` · ${agents.filter(x => !x.is_owner).length} global verfügbar` : ''} — Personas, System-Prompts und LLM-Modelle für Debatten
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          ${renderViewModeToggle()}
+          <button id="seed-personas-btn" onclick="seedPersonaAgents()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-violet-600/30 transition cursor-pointer" title="Legt 50 Wissenschaftler:innen und 7 bekannte fiktive KIs mit Biographie und Werken an">
+            🎓 Persona-Bibliothek (57)
+          </button>
+          <button onclick="showCreateAgentModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer">
+            + Neuer Agent
+          </button>
+        </div>
+      </div>
+
+      ${agents.length === 0 ? `
+        <div class="glass-card p-12 rounded-2xl text-center border border-slate-800">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto mb-3 text-xl font-bold">🤖</div>
+          <h3 class="text-sm font-bold text-white mb-1">Noch keine Agenten vorhanden</h3>
+          <p class="text-xs text-slate-400 mb-4 max-w-sm mx-auto">Erstelle Agenten wie Sokrates, Kant oder Nietzsche oder wähle aus unseren Vorlagen.</p>
+          <button onclick="showCreateAgentModal()" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Ersten Agenten anlegen</button>
+        </div>
+      ` : currentViewMode === "grid" ? `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${agents.map(a => `
+            <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                  <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    ${htmlEsc(a.name)}
+                  </h3>
+                  ${agentGlobalBadge(a)}
+                </div>
+                ${a.persona_bio ? `
+                  <div class="text-[11px] text-amber-200 bg-amber-950/40 p-2.5 rounded-xl border border-amber-900/40 italic line-clamp-3 leading-relaxed break-words">
+                    👤 ${htmlEsc(a.persona_bio)}
+                  </div>
+                ` : ''}
+                <div class="text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 font-mono line-clamp-2 leading-relaxed break-words">
+                  🎯 ${htmlEsc(a.system_prompt || "Kein System-Prompt gesetzt.")}
+                </div>
+              </div>
+              <div class="pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-500 font-mono">${htmlEsc(a.llm_model || "Standard Modell")}</span>
+                  ${a.web_search_enabled ? `
+                    <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono font-semibold flex items-center gap-1">
+                      🌐 ${htmlEsc(a.web_search_provider === 'searxng' ? 'SearXNG' : 'DuckDuckGo')}
+                    </span>
+                  ` : ''}
+                </div>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                  ${agentActions(a, true)}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div class="space-y-3">
+          ${agents.map(a => `
+            <div class="glass-card glass-card-hover p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-start justify-between gap-4">
+              <div class="flex items-start gap-3.5 flex-1 min-w-0">
+                <span class="w-3 h-3 rounded-full bg-amber-400 shrink-0 mt-1"></span>
+                <div class="min-w-0 flex-1 space-y-2">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-bold text-sm text-white break-words">${htmlEsc(a.name)}</h3>
+                    ${agentGlobalBadge(a)}
+                    <span class="text-[11px] text-slate-400 font-mono bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80">${htmlEsc(a.llm_model || "Standard Modell")}</span>
+                    ${a.web_search_enabled ? `
+                      <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono font-semibold">
+                        🌐 ${htmlEsc(a.web_search_provider === 'searxng' ? 'SearXNG' : 'DuckDuckGo')}
+                      </span>
+                    ` : ''}
+                  </div>
+                  ${a.persona_bio ? `
+                    <div class="text-xs text-amber-200/90 italic bg-amber-950/30 p-2.5 rounded-xl border border-amber-900/40 leading-relaxed break-words whitespace-normal">
+                      👤 ${htmlEsc(a.persona_bio)}
+                    </div>
+                  ` : ''}
+                  <div class="text-xs text-slate-300 font-mono bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 leading-relaxed break-words whitespace-normal">
+                    🎯 ${htmlEsc(a.system_prompt || "Kein System-Prompt gesetzt.")}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap shrink-0 self-end md:self-start pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60 w-full md:w-auto justify-end">
+                ${agentActions(a, false)}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+async function showEditAgentModal(id) {
+  var agent = await api("/agents/" + id);
+  if (!agent || agent._error) { alert("Agent konnte nicht geladen werden"); return; }
+
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Agenten Bearbeiten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Agent Name</label>
+          <input type="text" id="ag-edit-name" value="${htmlEsc(agent.name)}" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Persönlichkeit & Biografie</label>
+          <textarea id="ag-edit-bio" rows="3" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-amber-200 focus:outline-none focus:border-amber-500 font-sans">${htmlEsc(agent.persona_bio || '')}</textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Aufgabe / Debatten-Instruktionen (System Prompt)</label>
+          <textarea id="ag-edit-prompt" rows="3" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500">${htmlEsc(agent.system_prompt || '')}</textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">LLM Provider / Verbindung</label>
+            <select id="ag-edit-provider" onchange="loadModelsForAgentModal(this.value)" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+              <option value="openai" ${agent.llm_provider === 'openai' ? 'selected' : ''}>OpenAI API</option>
+              <option value="ollama" ${agent.llm_provider === 'ollama' ? 'selected' : ''}>Ollama (Lokale LLMs)</option>
+            </select>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium text-slate-300">Modell-Filter</label>
+              <span id="ag-edit-model-count" class="text-[10px] text-amber-400 font-mono font-semibold">Lade...</span>
+            </div>
+            <input type="text" id="ag-edit-model-search" oninput="filterAgentModels(this.value)" placeholder="🔍 Suche (z.B. deepseek, llama, gpt-4)..." class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-amber-300 font-mono focus:outline-none mb-1"/>
+            <select id="ag-edit-model-select" onchange="document.getElementById('ag-edit-model').value = this.value" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono focus:outline-none">
+              <option value="">Lade Modelle        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Gewählter Modellname (oder Eigener)</label>
+          <input type="text" id="ag-edit-model" value="${htmlEsc(agent.llm_model || '')}" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono focus:outline-none"/>
+        </div>
+
+        <!-- Werkzeuge & Websuche -->
+        <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs font-bold text-cyan-300 cursor-pointer">
+              <input type="checkbox" id="ag-edit-search-enabled" ${agent.web_search_enabled ? 'checked' : ''} onchange="document.getElementById('ag-edit-search-config').classList.toggle('hidden', !this.checked)" class="rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-0"/>
+              🌐 Online-Websuche aktivieren (DuckDuckGo / SearXNG)
+            </label>
+          </div>
+          <div id="ag-edit-search-config" class="${agent.web_search_enabled ? '' : 'hidden'} grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Such-Engine Provider</label>
+              <select id="ag-edit-search-provider" onchange="document.getElementById('ag-edit-searxng-url-box').classList.toggle('hidden', this.value !== 'searxng')" class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+                <option value="duckduckgo" ${agent.web_search_provider === 'duckduckgo' ? 'selected' : ''}>DuckDuckGo (Kostenlos & Ohne Key)</option>
+                <option value="searxng" ${agent.web_search_provider === 'searxng' ? 'selected' : ''}>SearXNG (Eigene Instanz)</option>
+              </select>
+            </div>
+            <div id="ag-edit-searxng-url-box" class="${agent.web_search_provider === 'searxng' ? '' : 'hidden'}">
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">SearXNG Server URL</label>
+              <input type="text" id="ag-edit-searxng-url" value="${htmlEsc(agent.searxng_url || '')}" placeholder="http://localhost:8080" class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ag-edit-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitEditAgent('${agent.id}')" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20">Änderungen Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+  await loadModelsForAgentModal(agent.llm_provider || "openai", agent.llm_model);
+}
+
+var cachedModelsList = [];
+
+async function loadModelsForAgentModal(provider, selectedModel) {
+  var selectEl = document.getElementById("ag-model-select") || document.getElementById("ag-edit-model-select");
+  var countBadge = document.getElementById("ag-model-count") || document.getElementById("ag-edit-model-count");
+
+  if (selectEl) selectEl.innerHTML = `<option value="">Modelle werden geladen...</option>`;
+  if (countBadge) countBadge.textContent = "Abfrage der API...";
+
+  var models = await api("/llm-endpoints/models?provider=" + provider) || [];
+  if (models && models._error) models = [];
+
+  if (models.length === 0) {
+    models = provider === "openai" ? ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"] : ["llama3:8b", "gemma2:9b", "mistral:latest"];
+  }
+
+  cachedModelsList = models;
+  if (countBadge) countBadge.textContent = models.length + " Modelle erreichbar";
+
+  renderModelOptions(models, selectedModel);
+}
+
+function filterAgentModels(query) {
+  var q = (query || "").toLowerCase().trim();
+  var filtered = q ? cachedModelsList.filter(m => m.toLowerCase().includes(q)) : cachedModelsList;
+  var countBadge = document.getElementById("ag-model-count") || document.getElementById("ag-edit-model-count");
+  if (countBadge) countBadge.textContent = filtered.length + " von " + cachedModelsList.length + " Modellen";
+  renderModelOptions(filtered);
+}
+
+function renderModelOptions(modelsList, selectedModel) {
+  var selectEl = document.getElementById("ag-model-select") || document.getElementById("ag-edit-model-select");
+  var targetInput = document.getElementById("ag-model") || document.getElementById("ag-edit-model");
+  if (!selectEl) return;
+
+  var currentInputVal = targetInput ? targetInput.value : "";
+  var activeVal = selectedModel || currentInputVal || (modelsList[0] || "");
+
+  if (modelsList.length === 0) {
+    selectEl.innerHTML = `<option value="">Keine passenden Modelle gefunden</option>`;
+    return;
+  }
+
+  var sliceList = modelsList.slice(0, 500);
+  selectEl.innerHTML = sliceList.map(m => `<option value="${htmlEsc(m)}" ${m === activeVal ? 'selected' : ''}>${htmlEsc(m)}</option>`).join('');
+
+  if (activeVal && targetInput && !targetInput.value) {
+    targetInput.value = activeVal;
+  }
+}
+
+async function submitEditAgent(id) {
+  var name = document.getElementById("ag-edit-name").value.trim();
+  var bio = document.getElementById("ag-edit-bio").value.trim();
+  var prompt = document.getElementById("ag-edit-prompt").value.trim();
+  var provider = document.getElementById("ag-edit-provider").value;
+  var model = document.getElementById("ag-edit-model").value.trim();
+  var searchEnabled = document.getElementById("ag-edit-search-enabled") ? document.getElementById("ag-edit-search-enabled").checked : false;
+  var searchProvider = document.getElementById("ag-edit-search-provider") ? document.getElementById("ag-edit-search-provider").value : "duckduckgo";
+  var searxngUrl = document.getElementById("ag-edit-searxng-url") ? document.getElementById("ag-edit-searxng-url").value.trim() : "";
+
+  var errEl = document.getElementById("ag-edit-error");
+  if (errEl) errEl.textContent = "";
+
+  if (!name) { if (errEl) errEl.textContent = "Bitte einen Namen angeben"; return; }
+
+  var res = await api("/agents/" + id, "PUT", {
+    name: name,
+    persona_bio: bio,
+    system_prompt: prompt,
+    llm_provider: provider,
+    llm_model: model,
+    web_search_enabled: searchEnabled,
+    web_search_provider: searchProvider,
+    searxng_url: searxngUrl
+  });
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Speichern des Agenten";
+    return;
+  }
+
+  closeModal();
+  navigate("agents");
+}
+
+async function seedPersonaAgents() {
+  var btn = document.getElementById("seed-personas-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Lege Agenten an…"; }
+  var res = await api("/agents/seed-personas", "POST", {});
+  if (btn) { btn.disabled = false; btn.textContent = "🎓 Persona-Bibliothek (57)"; }
+  if (!res || res._error) {
+    alert("Persona-Bibliothek konnte nicht angelegt werden: " + (res && res.detail ? res.detail : "Unbekannter Fehler"));
+    return;
+  }
+  alert("Persona-Bibliothek: " + res.created + " neu angelegt, " + res.skipped + " bereits vorhanden.");
+  navigate("agents");
+}
+
+async function showCreateAgentModal() {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+  
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Neuen Agenten erstellen</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <!-- Presets -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Schnell-Vorlagen (Persönlichkeit & Biografie)</label>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="applyAgentPreset('Albert Einstein', 'Albert Einstein (1879–1955), theoretischer Physiker und Relativitätstheoretiker. Denkt in Gedankenexperimenten, vertritt wissenschaftliche Demut, Skepsis gegenüber Zufall und ausgeprägten Pazifismus.', 'Analysiere Thesen durch logische Gedankenexperimente, physikalische Intuition und ethischen Humanismus.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-medium border border-amber-500/30">Albert Einstein</button>
+          <button onclick="applyAgentPreset('Johann Wolfgang von Goethe', 'Johann Wolfgang von Goethe (1749–1832), Dichter, Naturforscher und Staatsmann. Ganzheitliches Weltbild, Morphologie der Natur, Synthese von Kunst, Ethik und Wissenschaft.', 'Argumentiere aus organischer, ganzheitlicher Sichtweise. Verbinde ästhetische Tiefe mit wissenschaftlichem Naturverständnis.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-lg text-xs font-medium border border-emerald-500/30">Goethe</button>
+          <button onclick="applyAgentPreset('Immanuel Kant', 'Immanuel Kant (1724–1804), Aufklärungsphilosoph. Begründer der Pflichtethik (Kategorischer Imperativ) und des Kritizismus. Strenge moralische Prinzipien und rationaler Universalismus.', 'Prüfe jede Maxime auf ihre logische Universalisierbarkeit. Argumentiere aus deontologischer Pflichtethik.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-medium border border-indigo-500/30">Kant</button>
+          <button onclick="applyAgentPreset('Sokrates', 'Sokrates (469–399 v. Chr.), Begründer der antiken Dialektik. Bekannt für sokratische Ironie (Ich weiß, dass ich nichts weiß) und die Mäeutische Fragenkunst.', 'Hinterfrage vorschnelle Gewissheiten durch präzise, mäeutische Dialektik und scharfe Gegenfragen.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-rose-300 rounded-lg text-xs font-medium border border-rose-500/30">Sokrates</button>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Agent Name</label>
+          <input type="text" id="ag-name" placeholder="z.B. Albert Einstein" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Persönlichkeit & Biografie (Wer der Agent ist)</label>
+          <textarea id="ag-bio" rows="3" placeholder="Biografie, Weltbild, Denkweise und historische Rolle beschreiben (z.B. Einsteins Relativitätsdenken oder Goethes Ganzheitlichkeit)..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-amber-200 focus:outline-none focus:border-amber-500 font-sans"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Aufgabe / Debatten-Instruktionen (System Prompt)</label>
+          <textarea id="ag-prompt" rows="3" placeholder="Konkrete Verhaltensregeln und Argumentationsauftrag..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">LLM Provider / Verbindung</label>
+            <select id="ag-provider" onchange="loadModelsForAgentModal(this.value)" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+              <option value="openai">OpenAI API</option>
+              <option value="ollama">Ollama (Lokale LLMs)</option>
+            </select>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium text-slate-300">Modell-Filter</label>
+              <span id="ag-model-count" class="text-[10px] text-amber-400 font-mono font-semibold">Lade...</span>
+            </div>
+            <input type="text" id="ag-model-search" oninput="filterAgentModels(this.value)" placeholder="🔍 Suche (z.B. deepseek, llama, gpt-4)..." class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-amber-300 font-mono focus:outline-none mb-1"/>
+            <select id="ag-model-select" onchange="document.getElementById('ag-model').value = this.value" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+              <option value="">Lade Modelle...</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Gewählter Modellname (oder Eigener)</label>
+          <input type="text" id="ag-model" placeholder="gpt-4o-mini oder llama3:8b" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono focus:outline-none"/>
+        </div>
+
+        <!-- Werkzeuge & Websuche -->
+        <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs font-bold text-cyan-300 cursor-pointer">
+              <input type="checkbox" id="ag-search-enabled" onchange="document.getElementById('ag-search-config').classList.toggle('hidden', !this.checked)" class="rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-0"/>
+              🌐 Online-Websuche aktivieren (DuckDuckGo / SearXNG)
+            </label>
+          </div>
+          <div id="ag-search-config" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Such-Engine Provider</label>
+              <select id="ag-search-provider" onchange="document.getElementById('ag-searxng-url-box').classList.toggle('hidden', this.value !== 'searxng')" class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+                <option value="duckduckgo">DuckDuckGo (Kostenlos & Ohne Key)</option>
+                <option value="searxng">SearXNG (Eigene Instanz)</option>
+              </select>
+            </div>
+            <div id="ag-searxng-url-box" class="hidden">
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">SearXNG Server URL</label>
+              <input type="text" id="ag-searxng-url" placeholder="http://localhost:8080" class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ag-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitAgent()" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20">Agent Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+  await loadModelsForAgentModal("openai");
+}
+
+function applyAgentPreset(name, bio, prompt) {
+  document.getElementById("ag-name").value = name;
+  document.getElementById("ag-bio").value = bio || "";
+  document.getElementById("ag-prompt").value = prompt || "";
+}
+
+async function submitAgent() {
+  var name = document.getElementById("ag-name").value.trim();
+  var bio = document.getElementById("ag-bio").value.trim();
+  var prompt = document.getElementById("ag-prompt").value.trim();
+  var provider = document.getElementById("ag-provider").value;
+  var model = document.getElementById("ag-model").value.trim() || (provider === "openai" ? "gpt-4o-mini" : "llama3:8b");
+  var searchEnabled = document.getElementById("ag-search-enabled") ? document.getElementById("ag-search-enabled").checked : false;
+  var searchProvider = document.getElementById("ag-search-provider") ? document.getElementById("ag-search-provider").value : "duckduckgo";
+  var searxngUrl = document.getElementById("ag-searxng-url") ? document.getElementById("ag-searxng-url").value.trim() : "";
+
+  var errEl = document.getElementById("ag-error");
+  if (errEl) errEl.textContent = "";
+
+  if (!name) { if (errEl) errEl.textContent = "Bitte einen Namen angeben"; return; }
+
+  var res = await api("/agents", "POST", {
+    name: name,
+    persona_bio: bio,
+    system_prompt: prompt,
+    llm_provider: provider,
+    llm_model: model,
+    web_search_enabled: searchEnabled,
+    web_search_provider: searchProvider,
+    searxng_url: searxngUrl
+  });
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Erstellen des Agenten";
+    return;
+  }
+
+  closeModal();
+  navigate("agents");
+}
+
+async function deleteAgent(id) {
+  if (!confirm("Agenten wirklich löschen?")) return;
+  await api("/agents/" + id, "DELETE");
+  navigate("agents");
+}
+
+/* =========================================================================
+   3. Projekte View & Agent Assignment
+   ========================================================================= */
+async function renderProjectsPage(el) {
+  var projects = await api("/projects") || [];
+  var agents = await api("/agents") || [];
+
+  var html = `
+    <div class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">Debattenprojekte</h1>
+          <p class="text-xs text-slate-400 mt-1">Projekt anlegen, Thema/Motion vorgeben, Agenten zuweisen & Moderator-Ziel festlegen</p>
+        </div>
+        <div class="flex items-center gap-3">
+          ${renderViewModeToggle()}
+          <button onclick="showCreateProjectModal()" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+            + Neues Projekt
+          </button>
+        </div>
+      </div>
+
+      ${projects.length === 0 ? `
+        <div class="glass-card p-12 rounded-2xl text-center border border-slate-800">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3 text-xl font-bold">📁</div>
+          <h3 class="text-sm font-bold text-white mb-1">Keine Projekte konfiguriert</h3>
+          <p class="text-xs text-slate-400 mb-4 max-w-sm mx-auto">Lege ein neues Debattenprojekt mit einer philosophischen Motion an und weise deine Agenten zu.</p>
+          <button onclick="showCreateProjectModal()" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Neues Projekt Erstellen</button>
+        </div>
+      ` : currentViewMode === "grid" ? `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          ${projects.map(p => {
+            var modCfg = p.moderator_config || {};
+            return `
+              <div class="glass-card glass-card-hover p-6 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-extrabold text-base text-white">${htmlEsc(p.name)}</h3>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase">${htmlEsc(p.status || "draft")}</span>
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thema / Motion</div>
+                    <p class="text-xs text-slate-200 bg-slate-950/70 p-3 rounded-xl border border-slate-800 font-medium leading-relaxed">${htmlEsc(p.motion)}</p>
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Moderator-Ziel & Dauer</div>
+                    <p class="text-xs text-indigo-300 bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-900/50 italic">${htmlEsc(modCfg.goal || "Synthese und Zielsteuerung.")}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                      <span class="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800 text-[10px] font-mono">⏳ Max ${modCfg.max_rounds || 15} Runden</span>
+                      ${modCfg.max_duration_minutes ? `<span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono">⏱️ Max ${modCfg.max_duration_minutes} Min</span>` : '<span class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 text-[10px] font-mono">⏱️ Unbegrenzt</span>'}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Zugewiesene Agenten (${(p.agent_ids || []).length})</div>
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      ${(p.agent_ids || []).map(aid => {
+                        var agObj = agents.find(x => x.id === aid);
+                        return `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-md text-[11px] font-medium">${htmlEsc(agObj ? agObj.name : aid.substring(0,8))}</span>`;
+                      }).join('')}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <button onclick="showEditProjectModal('${p.id}')" class="text-emerald-400 hover:text-emerald-300 text-xs font-semibold cursor-pointer">Bearbeiten</button>
+                    <button onclick="showProjectMaterialModal('${p.id}', '${htmlEsc(p.name)}')" class="text-sky-400 hover:text-sky-300 text-xs font-semibold cursor-pointer">📎 Material</button>
+                    <button onclick="deleteProject('${p.id}')" class="text-rose-400 hover:text-rose-300 text-xs font-semibold cursor-pointer">Löschen</button>
+                  </div>
+                  <button onclick="startDebateFromProject('${p.id}', '${htmlEsc(p.motion)}')" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
+                    <span>⚡ Debatte Starten</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div class="space-y-3">
+          ${projects.map(p => {
+            var modCfg = p.moderator_config || {};
+            return `
+              <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div class="min-w-0 flex-1 space-y-2.5">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <h3 class="font-extrabold text-base text-white break-words">${htmlEsc(p.name)}</h3>
+                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase shrink-0">${htmlEsc(p.status || "draft")}</span>
+                  </div>
+                  <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thema / Motion</div>
+                    <p class="text-xs text-slate-200 font-medium leading-relaxed break-words whitespace-normal">💬 ${htmlEsc(p.motion)}</p>
+                  </div>
+                  ${modCfg.goal ? `
+                    <div class="text-xs text-indigo-300 bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-900/40 italic break-words whitespace-normal">
+                      🎯 Moderator-Ziel: ${htmlEsc(modCfg.goal)}
+                    </div>
+                  ` : ''}
+                  <div class="flex flex-wrap items-center gap-2 pt-1">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase">Zugewiesene Agenten (${(p.agent_ids || []).length}):</span>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${(p.agent_ids || []).map(aid => {
+                        var agObj = agents.find(x => x.id === aid);
+                        return `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-md text-[11px] font-medium">${htmlEsc(agObj ? agObj.name : aid.substring(0,8))}</span>`;
+                      }).join('')}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 justify-end pt-3 md:pt-0 border-t md:border-t-0 border-slate-800/60 w-full md:w-auto">
+                  <button onclick="showEditProjectModal('${p.id}')" class="px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold cursor-pointer">Bearbeiten</button>
+                  <button onclick="showProjectMaterialModal('${p.id}', '${htmlEsc(p.name)}')" class="px-3.5 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-xl text-xs font-semibold cursor-pointer">📎 Material</button>
+                  <button onclick="deleteProject('${p.id}')" class="px-3.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-semibold cursor-pointer">Löschen</button>
+                  <button onclick="startDebateFromProject('${p.id}', '${htmlEsc(p.motion)}')" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer flex items-center gap-1.5">⚡ Debatte Starten</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `}
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+async function showEditProjectModal(id) {
+  var prj = await api("/projects/" + id);
+  var agents = await api("/agents") || [];
+  if (!prj || prj._error) { alert("Projekt konnte nicht geladen werden"); return; }
+
+  var modCfg = prj.moderator_config || {};
+  var assignedAgentIds = prj.agent_ids || [];
+
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Debattenprojekt Bearbeiten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Projekt Name</label>
+          <input type="text" id="pj-edit-name" value="${htmlEsc(prj.name)}" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Philosophisches Thema / Motion</label>
+          <textarea id="pj-edit-motion" rows="3" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500">${htmlEsc(prj.motion)}</textarea>
+        </div>
+
+        <div>
+          ${agentModeBlock("edit", prj.agent_selection_mode || "manual", prj.auto_agent_count || 4)}
+        </div>
+
+        <div id="pj-edit-manual-block" class="${(prj.agent_selection_mode || 'manual') === 'auto' ? 'hidden' : ''}">
+          <label class="block text-xs font-medium text-slate-300 mb-2">Agenten Zuweisen (${agents.length} verfügbar)</label>
+          <div class="space-y-2 max-h-36 overflow-y-auto bg-slate-950 p-3 rounded-xl border border-slate-800">
+            ${agents.map(a => `
+              <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer">
+                <input type="checkbox" name="pj-edit-agents" value="${a.id}" ${assignedAgentIds.includes(a.id) ? 'checked' : ''} class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0"/>
+                <span>${htmlEsc(a.name)}${a.is_global && !a.is_owner ? ' 🌍' : ''} (${htmlEsc(a.llm_provider)})</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <div id="pj-edit-auto-block" class="${(prj.agent_selection_mode || 'manual') === 'auto' ? '' : 'hidden'}">
+          <button onclick="previewAutoAgents('${prj.id}', 'edit')" class="px-3 py-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-semibold cursor-pointer">🔮 Auswahl jetzt vorschauen</button>
+          <div id="pj-edit-preview" class="mt-2 text-xs text-slate-400"></div>
+        </div>
+
+        <div class="bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-900/40 space-y-3">
+          <div class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+            <span>⚖️ Moderator Steuerung & Debatten-Dauer</span>
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-300 mb-1">Moderator-Ziel</label>
+            <input type="text" id="pj-edit-mod-goal" value="${htmlEsc(modCfg.goal || 'Synthese und Zielsteuerung.')}" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"/>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Moderation Intervall</label>
+              <input type="number" id="pj-edit-mod-interval" value="${modCfg.interval_turns || 3}" min="1" max="10" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">Runden pro Check</span>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Runden (Limit)</label>
+              <input type="number" id="pj-edit-max-rounds" value="${modCfg.max_rounds || 15}" min="1" max="100" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">Max Runden</span>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Zeit (Minuten)</label>
+              <input type="number" id="pj-edit-max-duration" value="${modCfg.max_duration_minutes || ''}" placeholder="0 = unbegrenzt" min="0" max="480" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">0 für unbegrenzt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pj-edit-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitEditProject('${prj.id}')" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20">Änderungen Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+async function submitEditProject(id) {
+  var name = document.getElementById("pj-edit-name").value.trim();
+  var motion = document.getElementById("pj-edit-motion").value.trim();
+  var modGoal = document.getElementById("pj-edit-mod-goal").value.trim();
+  var modInterval = parseInt(document.getElementById("pj-edit-mod-interval").value) || 3;
+  var maxRounds = parseInt(document.getElementById("pj-edit-max-rounds").value) || 15;
+  var maxDurVal = document.getElementById("pj-edit-max-duration").value;
+  var maxDuration = maxDurVal !== "" ? parseInt(maxDurVal) : null;
+  var errEl = document.getElementById("pj-edit-error");
+  if (errEl) errEl.textContent = "";
+
+  var selectedAgentIds = Array.from(document.querySelectorAll('input[name="pj-edit-agents"]:checked')).map(cb => cb.value);
+
+  if (!name || !motion) { if (errEl) errEl.textContent = "Bitte Name und Thema angeben"; return; }
+
+  var mode = agentModeValues("edit");
+  var res = await api("/projects/" + id, "PATCH", {
+    name: name,
+    motion: motion,
+    agent_ids: mode.agent_selection_mode === "auto" ? [] : selectedAgentIds,
+    moderator_goal: modGoal,
+    moderator_interval: modInterval,
+    max_rounds: maxRounds,
+    max_duration_minutes: maxDuration,
+    agent_selection_mode: mode.agent_selection_mode,
+    auto_agent_count: mode.auto_agent_count
+  });
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Speichern des Projekts";
+    return;
+  }
+
+  closeModal();
+  navigate("projects");
+}
+
+async function showCreateProjectModal() {
+  var agents = await api("/agents") || [];
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Neues Debattenprojekt</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Projekt Name</label>
+          <input type="text" id="pj-name" placeholder="z.B. Ethik der künstlichen Intelligenz" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Philosophisches Thema / Motion</label>
+          <textarea id="pj-motion" rows="3" placeholder="z.B. Besitzen fortgeschrittene KI-Systeme ein Recht auf subjektiven Schutz oder bleiben sie reine Werkzeuge?" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+
+        <div>${agentModeBlock("new", "manual", 4)}</div>
+
+        <div id="pj-new-manual-block">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Agenten zuweisen</label>
+          ${agents.length === 0 ? `<p class="text-xs text-amber-400 bg-amber-950/40 p-2 rounded border border-amber-900">Keine Agenten vorhanden. Bitte erst unter '1. Agenten' erstellen.</p>` : `
+            <div class="space-y-1.5 max-h-36 overflow-y-auto bg-slate-900 p-2.5 border border-slate-700 rounded-lg">
+              ${agents.map(a => `
+                <label class="flex items-center gap-2 text-xs text-slate-200 hover:bg-slate-800 p-1.5 rounded cursor-pointer">
+                  <input type="checkbox" name="pj-agents" value="${a.id}" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0">
+                  <span class="font-semibold text-white">${htmlEsc(a.name)}${a.is_global && !a.is_owner ? ' 🌍' : ''}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">(${htmlEsc(a.llm_provider)})</span>
+                </label>
+              `).join('')}
+            </div>
+          `}
+        </div>
+
+        <div id="pj-new-auto-block" class="hidden">
+          <p class="text-xs text-violet-200 bg-violet-950/30 p-2.5 rounded-lg border border-violet-900/40">
+            Die Agenten werden beim Start der Debatte automatisch zum Thema ausgewählt und erhalten
+            vollen Zugriff auf Websuche und alle Werkzeuge. Eine Vorschau ist nach dem Speichern möglich.
+          </p>
+        </div>
+
+        <!-- Moderator & Dauer Config -->
+        <div class="bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-900/40 space-y-3">
+          <div class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+            <span>⚖️ Moderator Steuerung & Debatten-Dauer</span>
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-300 mb-1">Ziel für die Diskussion (Moderator Steering Goal)</label>
+            <input type="text" id="pj-mod-goal" placeholder="z.B. Erarbeite konkrete ethische Kriterien für Konsens heraus." value="Zielorientierte Synthese und Konsensfindung." class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"/>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Moderation Intervall</label>
+              <input type="number" id="pj-mod-interval" value="3" min="1" max="10" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">Runden pro Check</span>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Runden (Limit)</label>
+              <input type="number" id="pj-max-rounds" value="15" min="1" max="100" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">Max Runden</span>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-300 mb-1">Max. Zeit (Minuten)</label>
+              <input type="number" id="pj-max-duration" placeholder="0 = unbegrenzt" min="0" max="480" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+              <span class="text-[9px] text-slate-400">0 für unbegrenzt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitProject()" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20">Projekt Erstellen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+async function submitProject() {
+  var name = document.getElementById("pj-name").value.trim();
+  var motion = document.getElementById("pj-motion").value.trim();
+  var goal = document.getElementById("pj-mod-goal").value.trim();
+  var interval = parseInt(document.getElementById("pj-mod-interval").value) || 3;
+  var maxRounds = parseInt(document.getElementById("pj-max-rounds").value) || 15;
+  var maxDurVal = document.getElementById("pj-max-duration").value;
+  var maxDuration = maxDurVal !== "" ? parseInt(maxDurVal) : null;
+  
+  var agentCheckboxes = document.querySelectorAll('input[name="pj-agents"]:checked');
+  var agent_ids = Array.from(agentCheckboxes).map(c => c.value);
+
+  if (!name || !motion) { alert("Name und Motion sind erforderlich"); return; }
+
+  var mode = agentModeValues("new");
+  var res = await api("/projects", "POST", {
+    name: name,
+    motion: motion,
+    agent_ids: mode.agent_selection_mode === "auto" ? [] : agent_ids,
+    moderator_goal: goal,
+    moderator_interval: interval,
+    max_rounds: maxRounds,
+    max_duration_minutes: maxDuration,
+    agent_selection_mode: mode.agent_selection_mode,
+    auto_agent_count: mode.auto_agent_count
+  });
+
+  if (res) {
+    closeModal();
+    navigate("projects");
+  } else {
+    alert("Fehler beim Erstellen des Projekts");
+  }
+}
+
+// ---- Agentenauswahl: manuell oder KI-gestützt ----
+
+function agentModeBlock(prefix, mode, count) {
+  var isAuto = mode === "auto";
+  return `
+    <div class="bg-violet-950/20 p-3.5 rounded-xl border border-violet-900/40 space-y-2.5">
+      <div class="text-xs font-bold text-violet-300">🧭 Auswahl der Teilnehmer</div>
+      <div class="flex flex-col gap-1.5">
+        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+          <input type="radio" name="pj-${prefix}-mode" value="manual" ${isAuto ? '' : 'checked'} onchange="onAgentModeChange('${prefix}')" class="text-emerald-500 focus:ring-0"/>
+          <span>Manuell — ich wähle die Agenten selbst</span>
+        </label>
+        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+          <input type="radio" name="pj-${prefix}-mode" value="auto" ${isAuto ? 'checked' : ''} onchange="onAgentModeChange('${prefix}')" class="text-violet-500 focus:ring-0"/>
+          <span>Automatisch — KI wählt die zum Thema passendsten Agenten</span>
+        </label>
+      </div>
+      <div id="pj-${prefix}-count-wrap" class="${isAuto ? '' : 'hidden'} flex items-center gap-2">
+        <label class="text-[11px] text-slate-300">Anzahl Teilnehmer</label>
+        <input type="number" id="pj-${prefix}-count" value="${count}" min="2" max="12" class="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        <span class="text-[10px] text-slate-500">Analyse läuft über dein Standard-LLM aus dem Profil</span>
+      </div>
+    </div>`;
+}
+
+function onAgentModeChange(prefix) {
+  var sel = document.querySelector('input[name="pj-' + prefix + '-mode"]:checked');
+  var isAuto = sel && sel.value === "auto";
+  var ids = { manual: "pj-" + prefix + "-manual-block", auto: "pj-" + prefix + "-auto-block", count: "pj-" + prefix + "-count-wrap" };
+  var m = document.getElementById(ids.manual), a = document.getElementById(ids.auto), c = document.getElementById(ids.count);
+  if (m) m.classList.toggle("hidden", isAuto);
+  if (a) a.classList.toggle("hidden", !isAuto);
+  if (c) c.classList.toggle("hidden", !isAuto);
+}
+
+function agentModeValues(prefix) {
+  var sel = document.querySelector('input[name="pj-' + prefix + '-mode"]:checked');
+  var cnt = document.getElementById("pj-" + prefix + "-count");
+  return {
+    agent_selection_mode: sel ? sel.value : "manual",
+    auto_agent_count: cnt ? (parseInt(cnt.value) || 4) : 4
+  };
+}
+
+async function previewAutoAgents(projectId, prefix) {
+  var el = document.getElementById("pj-" + prefix + "-preview");
+  if (el) el.innerHTML = '<span class="text-slate-400">Analysiere Thema mit deinem Profil-LLM… das kann eine Minute dauern.</span>';
+  var cnt = document.getElementById("pj-" + prefix + "-count");
+  var q = cnt && cnt.value ? "?count=" + (parseInt(cnt.value) || 4) : "";
+  var res = await api("/projects/" + projectId + "/suggest-agents" + q, "POST", {});
+  if (!res || res._error) {
+    if (el) el.innerHTML = '<span class="text-rose-400">Auswahl fehlgeschlagen: ' + htmlEsc(res && res.detail ? res.detail : "Unbekannter Fehler") + '</span>';
+    return;
+  }
+  if (!el) return;
+  el.innerHTML =
+    (res.rationale ? '<div class="mb-2 italic text-violet-200">' + htmlEsc(res.rationale) + '</div>' : '') +
+    '<div class="space-y-1.5">' + res.selection.map(function(s) {
+      return '<div class="p-2 bg-slate-900/60 border border-slate-800 rounded-lg">' +
+             '<span class="text-white font-semibold">' + htmlEsc(s.name) + '</span>' +
+             (s.is_global ? ' <span class="text-[10px] text-violet-300">🌍</span>' : '') +
+             '<div class="text-[11px] text-slate-400">' + htmlEsc(s.reason) + '</div></div>';
+    }).join('') + '</div>';
+}
+
+// ---- Projekt-Material (Dokumente & Bilder) ----
+
+async function showProjectMaterialModal(projectId, projectName) {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">📎 Material — ${projectName}</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="bg-sky-950/30 p-4 rounded-xl border border-sky-900/40 space-y-3">
+        <div class="text-xs font-bold text-sky-300">Neues Material hochladen</div>
+        <p class="text-[11px] text-slate-400">Dokumente (.txt, .md, .pdf, .docx) werden als zitierfähige Quellen in die Debatte eingespeist. Bilder (.png, .jpg, .webp, .gif) bitte mit Beschreibung versehen, damit die Agenten den Inhalt kennen.</p>
+        <input type="file" id="mat-file" accept=".txt,.md,.pdf,.docx,.png,.jpg,.jpeg,.webp,.gif"
+          class="w-full text-xs text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-sky-600 file:text-white file:text-xs file:font-semibold file:cursor-pointer"/>
+        <textarea id="mat-description" rows="2" placeholder="Beschreibung / Kontext (bei Bildern dringend empfohlen)"
+          class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"></textarea>
+        <div class="flex items-center justify-between">
+          <div id="mat-error" class="text-xs text-rose-400 font-semibold"></div>
+          <button id="mat-upload-btn" onclick="uploadProjectMaterial('${projectId}')" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-sky-500/20 cursor-pointer">Hochladen</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold text-slate-300 mb-2">Vorhandenes Material</div>
+        <div id="mat-list" class="space-y-2 max-h-64 overflow-y-auto">
+          <div class="text-xs text-slate-500">Lade…</div>
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+  await refreshMaterialList(projectId);
+}
+
+async function refreshMaterialList(projectId) {
+  var listEl = document.getElementById("mat-list");
+  if (!listEl) return;
+  var docs = await api("/projects/" + projectId + "/documents");
+  if (!docs || docs._error) {
+    listEl.innerHTML = '<div class="text-xs text-rose-400">Material konnte nicht geladen werden.</div>';
+    return;
+  }
+  if (docs.length === 0) {
+    listEl.innerHTML = '<div class="text-xs text-slate-500">Noch kein Material hochgeladen.</div>';
+    return;
+  }
+  listEl.innerHTML = docs.map(function(d) {
+    var icon = d.kind === "image" ? "🖼️" : "📄";
+    var sizeKb = Math.max(1, Math.round((d.size_bytes || 0) / 1024));
+    var indexBadge = d.extracted_chars > 0
+      ? '<span class="text-[9px] text-emerald-400">indexiert</span>'
+      : '<span class="text-[9px] text-amber-400" title="Kein Text extrahiert — bei Bildern Beschreibung ergänzen">nicht indexiert</span>';
+    return `
+      <div class="flex items-center justify-between gap-2 p-2.5 bg-slate-900/60 border border-slate-800 rounded-xl">
+        <div class="min-w-0">
+          <div class="text-xs text-white font-semibold truncate">${icon} ${htmlEsc(d.filename)}</div>
+          <div class="text-[10px] text-slate-400 truncate">${sizeKb} KB · ${htmlEsc(d.description || "")} ${indexBadge}</div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="${API}/projects/${projectId}/documents/${d.id}/download?token=${encodeURIComponent(TOKEN)}" target="_blank" class="text-sky-400 hover:text-sky-300 text-[11px] font-semibold">Öffnen</a>
+          <button onclick="deleteProjectMaterial('${projectId}', '${d.id}')" class="text-rose-400 hover:text-rose-300 text-[11px] font-semibold cursor-pointer">Löschen</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function uploadProjectMaterial(projectId) {
+  var fileInput = document.getElementById("mat-file");
+  var errEl = document.getElementById("mat-error");
+  var btn = document.getElementById("mat-upload-btn");
+  errEl.textContent = "";
+  if (!fileInput.files || fileInput.files.length === 0) {
+    errEl.textContent = "Bitte eine Datei auswählen.";
+    return;
+  }
+  var fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+  fd.append("description", document.getElementById("mat-description").value.trim());
+
+  btn.disabled = true;
+  btn.textContent = "Lädt…";
+  try {
+    var r = await fetch(API + "/projects/" + projectId + "/documents", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + TOKEN },
+      body: fd
+    });
+    if (!r.ok) {
+      var d = await r.json().catch(function() { return { detail: r.statusText }; });
+      errEl.textContent = typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail);
+      return;
+    }
+    fileInput.value = "";
+    document.getElementById("mat-description").value = "";
+    await refreshMaterialList(projectId);
+  } catch (e) {
+    errEl.textContent = e.message || "Netzwerkfehler";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Hochladen";
+  }
+}
+
+async function deleteProjectMaterial(projectId, docId) {
+  if (!confirm("Material löschen? Es steht der Debatte danach nicht mehr zur Verfügung.")) return;
+  await api("/projects/" + projectId + "/documents/" + docId, "DELETE");
+  await refreshMaterialList(projectId);
+}
+
+async function deleteProject(id) {
+  if (!confirm("Projekt wirklich löschen?")) return;
+  await api("/projects/" + id, "DELETE");
+  navigate("projects");
+}
+
+/* =========================================================================
+   4. Debates & Real-time Live Arena
+   ========================================================================= */
+async function renderDebatesPage(el) {
+  var debates = await api("/debates") || [];
+
+  var html = `
+    <div class="space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">Debatten Live Arena</h1>
+          <p class="text-xs text-slate-400 mt-1">Echtzeit-Stream der philosophischen Diskurse & Moderations-Eingriffe</p>
+        </div>
+      </div>
+
+      <!-- Live Arena Stream Box -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-3 w-3 relative">
+              <span class="pulse-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <h3 class="font-extrabold text-sm text-white" id="arena-title">Keine aktive Debatte ausgewählt</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative inline-block text-left" id="arena-export-dropdown">
+              <button onclick="toggleExportMenu('arena-export-menu')" class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                <span>📥 Exportieren</span>
+                <span class="text-[10px]">▼</span>
+              </button>
+              <div id="arena-export-menu" class="hidden absolute right-0 mt-2 w-40 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 py-1">
+                <button onclick="downloadActiveDebate('markdown')" class="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 font-medium cursor-pointer">📝 Markdown (.md)</button>
+                <button onclick="downloadActiveDebate('json')" class="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 font-medium cursor-pointer">⚙️ JSON (.json)</button>
+                <button onclick="downloadActiveDebate('text')" class="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 font-medium cursor-pointer">📄 Text (.txt)</button>
+              </div>
+            </div>
+            <button id="btn-stop-debate" onclick="stopActiveDebate()" class="hidden px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 rounded-xl text-xs font-bold transition cursor-pointer">
+              Debatte Stoppen
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Live Output Stream -->
+        <div id="arena-stream" class="h-96 overflow-y-auto bg-slate-950/80 rounded-xl p-4 border border-slate-800/90 space-y-4 font-sans text-xs">
+          <div class="text-slate-500 text-center py-12">Wähle eine Debatte aus der Liste unten oder starte ein Projekt.</div>
+        </div>
+      </div>
+
+      <!-- Debate Sessions List -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
+        <h3 class="font-bold text-sm text-white">Alle Debatten-Sitzungen</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                <th class="py-3 px-2">ID</th>
+                <th class="py-3 px-2">Motion / Thema</th>
+                <th class="py-3 px-2">Status</th>
+                <th class="py-3 px-2">Erstellt am</th>
+                <th class="py-3 px-2 text-right">Aktionen & Export</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60">
+              ${debates.map(d => `
+                <tr class="hover:bg-slate-900/60 transition">
+                  <td class="py-3 px-2 font-mono text-slate-500">${d.id.substring(0,8)}</td>
+                  <td class="py-3 px-2 font-medium text-slate-200 max-w-xs truncate">${htmlEsc(d.motion)}</td>
+                  <td class="py-3 px-2"><span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">${htmlEsc(d.status)}</span></td>
+                  <td class="py-3 px-2 text-slate-400">${htmlEsc(d.created_at || "")}</td>
+                  <td class="py-3 px-2 text-right space-x-1.5">
+                    <button onclick="connectAndStream('${d.id}', '${htmlEsc(d.motion)}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs cursor-pointer">Arena</button>
+                    <button onclick="downloadDebateFile('${d.id}', 'markdown')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer">📥 MD</button>
+                    <button onclick="downloadDebateFile('${d.id}', 'json')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer">JSON</button>
+                    <button onclick="deleteDebate('${d.id}')" class="text-rose-400 hover:underline text-xs cursor-pointer">Löschen</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+function toggleExportMenu(menuId) {
+  var menu = document.getElementById(menuId);
+  if (menu) menu.classList.toggle("hidden");
+}
+
+function downloadActiveDebate(format) {
+  if (!activeDebateId) {
+    alert("Bitte wähle zuerst eine Debatte aus der Liste aus");
+    return;
+  }
+  toggleExportMenu("arena-export-menu");
+  downloadDebateFile(activeDebateId, format);
+}
+
+function downloadDebateFile(debateId, format) {
+  var token = TOKEN || localStorage.getItem("jwt_token") || localStorage.getItem("sde_token") || "";
+  fetch("/api/v2/debates/" + debateId + "/export?format=" + format + "&token=" + encodeURIComponent(token), {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error("HTTP Fehler " + res.status);
+    return res.blob();
+  })
+  .then(function(blob) {
+    var ext = format === "markdown" ? "md" : format;
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "debatte_" + debateId.substring(0, 8) + "." + ext;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  })
+  .catch(function(err) {
+    alert("Fehler beim Exportieren der Debatte: " + err.message);
+  });
+}
+
+async function startDebateFromProject(projectId, motion) {
+  var res = await api("/debates", "POST", {
+    project_id: projectId,
+    motion: motion
+  });
+  if (res && res.id) {
+    navigate("debates");
+    setTimeout(() => { connectAndStream(res.id, motion); }, 300);
+  } else {
+    alert("Fehler beim Erstellen der Debatte");
+  }
+}
+
+var seenStreamMessages = new Set();
+
+async function connectAndStream(debateId, motion) {
+  activeDebateId = debateId;
+  seenStreamMessages.clear();
+  document.getElementById("arena-title").textContent = "Debatte: " + motion;
+  document.getElementById("btn-stop-debate").classList.remove("hidden");
+  
+  var streamEl = document.getElementById("arena-stream");
+  streamEl.innerHTML = `<div class="text-indigo-400 font-mono text-center py-6">⚡ Lädt Diskurs-Historie & Live Stream...</div>`;
+
+  api("/debates/" + debateId + "/turns").then(function(turnsRes) {
+    if (streamEl.querySelector(".font-mono")) {
+      streamEl.innerHTML = "";
+    }
+    if (turnsRes && turnsRes.turns && turnsRes.turns.length > 0) {
+      turnsRes.turns.forEach(function(t) {
+        var agentName = t.agent || "AGENT";
+        var content = t.content || "";
+        appendStreamMessage("[" + agentName.toUpperCase() + "]: " + content);
+      });
+    } else {
+      if (streamEl.children.length === 0) {
+        streamEl.innerHTML = `<div class="text-slate-400 font-mono italic p-6 text-center">Debatte wird gestartet — Runden werden live empfangen...</div>`;
+      }
+    }
+  });
+
+  var loc = window.location;
+  var wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+  var wsUrl = wsProtocol + "//" + loc.host + "/api/v2/debates/" + debateId + "/stream";
+
+  if (activeWebsocket) { activeWebsocket.close(); }
+
+  try {
+    activeWebsocket = new WebSocket(wsUrl);
+    activeWebsocket.onmessage = function(evt) {
+      var parsed = JSON.parse(evt.data);
+      var msg = parsed.data || parsed.content || evt.data;
+      appendStreamMessage(msg);
+    };
+  } catch(e) {
+    appendStreamMessage("[STREAM ERROR]: " + e.message);
+  }
+
+  api("/debates/" + debateId + "/start", "POST");
+}
+
+function appendStreamMessage(text) {
+  if (!text || seenStreamMessages.has(text)) return;
+  seenStreamMessages.add(text);
+
+  var streamEl = document.getElementById("arena-stream");
+  var placeholder = streamEl.querySelector(".italic, .font-mono");
+  if (placeholder && streamEl.children.length === 1) {
+    streamEl.innerHTML = "";
+  }
+
+  var card = document.createElement("div");
+
+  if (text.includes("[MODERATOR]")) {
+    card.className = "p-3 rounded-xl bg-indigo-950/60 border border-indigo-800/80 text-indigo-200 font-semibold shadow-sm";
+  } else if (text.includes("[CONSENSUS]") || text.includes("[SYNTHESIS]")) {
+    card.className = "p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 font-bold shadow-md";
+  } else {
+    card.className = "p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 leading-relaxed shadow-sm";
+  }
+
+  card.innerHTML = htmlEsc(text).replace(/\n/g, '<br/>');
+  streamEl.appendChild(card);
+  streamEl.scrollTop = streamEl.scrollHeight;
+}
+
+async function stopActiveDebate() {
+  if (activeDebateId) {
+    await api("/debates/" + activeDebateId + "/stop", "POST");
+    if (activeWebsocket) activeWebsocket.close();
+    document.getElementById("btn-stop-debate").classList.add("hidden");
+    appendStreamMessage("[STATUS]: Debatte gestoppt.");
+  }
+}
+
+async function deleteDebate(id) {
+  if (!confirm("Debatte löschen?")) return;
+  await api("/debates/" + id, "DELETE");
+  navigate("debates");
+}
+
+/* =========================================================================
+   5. Connections View (LLM Endpoints)
+   ========================================================================= */
+async function renderConnectionsPage(el) {
+  var endpoints = await api("/llm-endpoints") || [];
+
+  var html = `
+    <div class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">LLM Verbindungen</h1>
+          <p class="text-xs text-slate-400 mt-1">Konfiguriere OpenAI API Schlüssel und lokale Ollama Instanzen</p>
+        </div>
+        <div class="flex items-center gap-3">
+          ${renderViewModeToggle()}
+          <button onclick="showCreateEndpointModal()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-cyan-500/20 transition cursor-pointer">
+            + Neue Verbindung
+          </button>
+        </div>
+      </div>
+
+      ${endpoints.length === 0 ? `
+        <div class="glass-card p-12 rounded-2xl text-center border border-slate-800">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto mb-3 text-xl font-bold">⚡</div>
+          <h3 class="text-sm font-bold text-white mb-1">Keine Verbindungen eingerichtet</h3>
+          <p class="text-xs text-slate-400 mb-4 max-w-sm mx-auto">Füge deinen OpenAI API-Key oder deine lokale Ollama URL hinzu.</p>
+          <button onclick="showCreateEndpointModal()" class="px-4 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Erste Verbindung anlegen</button>
+        </div>
+      ` : currentViewMode === "grid" ? `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${endpoints.map(ep => `
+            <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 space-y-3 flex flex-col justify-between" id="ep-card-${ep.id}">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-300 font-bold text-xs uppercase border border-cyan-500/20">${htmlEsc(ep.provider)}</span>
+                  ${ep.is_default ? `<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-[10px] font-bold">Standard</span>` : ''}
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-white">${htmlEsc(ep.model || "Kein Standard-Modell erzwungen")}</div>
+                  <div class="text-[11px] text-slate-400 font-mono truncate mt-0.5">${htmlEsc(ep.base_url || (ep.provider === 'ollama' ? 'http://localhost:11434' : 'https://api.openai.com/v1'))}</div>
+                </div>
+                <div id="ep-test-res-${ep.id}" class="hidden text-xs p-2.5 rounded-xl border font-mono"></div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-1.5">
+                  <button onclick="testSavedEndpoint('${ep.id}')" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer">
+                    ⚡ Verbindung Testen
+                  </button>
+                  <button onclick="showEndpointModelsModal('${ep.id}')" class="px-2.5 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer">
+                    📋 Modelle anzeigen
+                  </button>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="showEditEndpointModal('${ep.id}', '${htmlEsc(ep.provider)}', '${htmlEsc(ep.base_url || '')}', '${htmlEsc(ep.model || '')}')" class="text-cyan-400 hover:text-cyan-300 text-[11px] font-semibold cursor-pointer">Bearbeiten</button>
+                  <button onclick="deleteEndpoint('${ep.id}')" class="text-rose-400 hover:text-rose-300 text-[11px] font-semibold cursor-pointer">Löschen</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div class="space-y-3">
+          ${endpoints.map(ep => `
+            <div class="glass-card glass-card-hover p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4" id="ep-card-${ep.id}">
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex items-center gap-3">
+                  <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-bold text-xs uppercase border border-cyan-500/20">${htmlEsc(ep.provider)}</span>
+                  ${ep.is_default ? `<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-[10px] font-bold">Standard</span>` : ''}
+                  <span class="text-xs font-semibold text-white truncate">${htmlEsc(ep.model || "Kein Standard-Modell")}</span>
+                </div>
+                <p class="text-[11px] text-slate-400 font-mono truncate">${htmlEsc(ep.base_url || (ep.provider === 'ollama' ? 'http://localhost:11434' : 'https://api.openai.com/v1'))}</p>
+                <div id="ep-test-res-${ep.id}" class="hidden text-xs p-2.5 rounded-xl border font-mono"></div>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 shrink-0 justify-end pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
+                <button onclick="testSavedEndpoint('${ep.id}')" class="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold cursor-pointer">⚡ Testen</button>
+                <button onclick="showEndpointModelsModal('${ep.id}')" class="px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold cursor-pointer">📋 Modelle</button>
+                <button onclick="showEditEndpointModal('${ep.id}', '${htmlEsc(ep.provider)}', '${htmlEsc(ep.base_url || '')}', '${htmlEsc(ep.model || '')}')" class="px-2.5 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-semibold cursor-pointer">Bearbeiten</button>
+                <button onclick="deleteEndpoint('${ep.id}')" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold cursor-pointer">Löschen</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+async function testSavedEndpoint(id) {
+  var resEl = document.getElementById("ep-test-res-" + id);
+  if (!resEl) return;
+  resEl.classList.remove("hidden");
+  resEl.className = "text-xs p-2.5 rounded-xl border font-mono bg-slate-900 text-slate-300 border-slate-700 animate-pulse";
+  resEl.textContent = "🔍 Prüfe Erreichbarkeit der API/Instanz...";
+
+  var res = await api("/llm-endpoints/" + id + "/test", "POST");
+  if (res && res.status === "ok") {
+    resEl.className = "text-xs p-2.5 rounded-xl border font-mono bg-emerald-950/60 text-emerald-300 border-emerald-800/80";
+    resEl.textContent = "✓ " + res.detail;
+  } else {
+    resEl.className = "text-xs p-2.5 rounded-xl border font-mono bg-rose-950/60 text-rose-300 border-rose-800/80";
+    resEl.textContent = "✕ " + (res ? res.detail : "Verbindung fehlgeschlagen");
+  }
+}
+
+async function showEndpointModelsModal(id) {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">📋 Verfügbare LLM Modelle</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <div id="models-list-container" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        <div class="text-xs text-slate-400 animate-pulse">Abfrage der Modell-Liste vom Server...</div>
+      </div>
+      <div class="flex justify-end pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Schließen</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+
+  var models = await api("/llm-endpoints/" + id + "/models") || [];
+  var container = document.getElementById("models-list-container");
+  if (!container) return;
+
+  if (models && models._error) {
+    container.innerHTML = `<div class="text-xs text-rose-400 bg-rose-950/40 p-3 rounded-xl border border-rose-900/40">Fehler beim Abrufen: ${htmlEsc(models.detail)}</div>`;
+    return;
+  }
+
+  if (models.length === 0) {
+    container.innerHTML = `<div class="text-xs text-slate-400 p-3 bg-slate-900 rounded-xl">Keine spezifischen Modelle gelistet. Standard-Fallbacks aktiv.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="text-xs font-medium text-slate-400 mb-2">${models.length} erreichbare Modelle gefunden:</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      ${models.map(m => `
+        <div class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-amber-300 flex items-center justify-between">
+          <span class="truncate">${htmlEsc(m)}</span>
+          <button onclick="navigator.clipboard.writeText('${htmlEsc(m)}'); alert('Modellname kopiert!')" class="text-[10px] text-slate-500 hover:text-slate-300 ml-2">Kopieren</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function showCreateEndpointModal() {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Neue LLM Verbindung</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Provider</label>
+          <select id="ep-provider" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+            <option value="openai">OpenAI API</option>
+            <option value="ollama">Ollama (Lokaler Server)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Base URL (optional)</label>
+          <input type="text" id="ep-url" placeholder="http://localhost:11434" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">API Key (nur bei OpenAI)</label>
+          <input type="password" id="ep-key" placeholder="sk-..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Standard Modellname (optional)</label>
+          <input type="text" id="ep-model" placeholder="Optional: gpt-4o-mini oder llama3:8b" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+      </div>
+
+      <div id="ep-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitEndpoint()" class="px-4 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-cyan-500/20">Verbindung Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+function showEditEndpointModal(id, provider, url, model) {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">LLM Verbindung Bearbeiten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Provider</label>
+          <select id="ep-edit-provider" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none">
+            <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI API</option>
+            <option value="ollama" ${provider === 'ollama' ? 'selected' : ''}>Ollama (Lokaler Server)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Base URL</label>
+          <input type="text" id="ep-edit-url" value="${htmlEsc(url)}" placeholder="http://localhost:11434" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">API Key (neu eingeben falls geändert)</label>
+          <input type="password" id="ep-edit-key" placeholder="Unverändert lassen oder neuen Key eingeben..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Standard Modellname</label>
+          <input type="text" id="ep-edit-model" value="${htmlEsc(model)}" placeholder="gpt-4o-mini oder llama3:8b" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+      </div>
+
+      <div id="ep-edit-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitEditEndpoint('${id}')" class="px-4 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-cyan-500/20">Änderungen Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+async function submitEditEndpoint(id) {
+  var provider = document.getElementById("ep-edit-provider").value;
+  var url = document.getElementById("ep-edit-url").value.trim();
+  var key = document.getElementById("ep-edit-key").value.trim();
+  var model = document.getElementById("ep-edit-model").value.trim();
+  var errEl = document.getElementById("ep-edit-error");
+  if (errEl) errEl.textContent = "";
+
+  var payload = { provider: provider, base_url: url, llm_model: model };
+  if (key) payload.api_key = key;
+
+  var res = await api("/llm-endpoints/" + id, "PATCH", payload);
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Speichern der Verbindung";
+    return;
+  }
+
+  closeModal();
+  navigate("connections");
+}
+
+async function submitEndpoint() {
+  var provider = document.getElementById("ep-provider").value;
+  var url = document.getElementById("ep-url").value.trim();
+  var key = document.getElementById("ep-key").value.trim();
+  var model = document.getElementById("ep-model").value.trim();
+  var errEl = document.getElementById("ep-error");
+  if (errEl) errEl.textContent = "";
+
+  var res = await api("/llm-endpoints", "POST", {
+    provider: provider,
+    base_url: url,
+    api_key: key,
+    llm_model: model
+  });
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Erstellen der Verbindung";
+    return;
+  }
+
+  closeModal();
+  navigate("connections");
+}
+
+async function setDefaultEndpoint(id) {
+  await api("/llm-endpoints/" + id + "/set-default", "POST");
+  navigate("connections");
+}
+
+async function deleteEndpoint(id) {
+  if (!confirm("Verbindung löschen?")) return;
+  await api("/llm-endpoints/" + id, "DELETE");
+  navigate("connections");
+}
+
+/* =========================================================================
+   6. Knowledge View (GraphRAG Context Store)
+   ========================================================================= */
+async function renderKnowledgePage(el) {
+  var items = await api("/knowledge") || [];
+
+  var html = `
+    <div class="space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-6">
+        <div>
+          <h1 class="text-2xl font-black text-white tracking-tight">Wissen & GraphRAG Kontext</h1>
+          <p class="text-xs text-slate-400 mt-1">Hinterlege Fakten und Hintergrundmaterial für das Gedächtnis</p>
+        </div>
+        <button onclick="showCreateKnowledgeModal()" class="px-4 py-2 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-purple-500/20 transition">
+          + Wissen Hinzufügen
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${items.map(k => {
+          var textVal = (typeof k.value === 'object' && k.value !== null) ? (k.value.content || JSON.stringify(k.value)) : String(k.value || '');
+          return `
+            <div class="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 space-y-2 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-bold text-xs text-purple-300 font-mono">${htmlEsc(k.key)}</h4>
+                  <div class="flex items-center gap-2">
+                    <button onclick="showEditKnowledgeModal('${k.id}', '${htmlEsc(k.key)}', '${htmlEsc(textVal)}')" class="text-purple-400 hover:text-purple-300 text-[11px] font-semibold">Bearbeiten</button>
+                    <button onclick="deleteKnowledge('${k.id}')" class="text-rose-400 hover:text-rose-300 text-[11px] font-semibold">Löschen</button>
+                  </div>
+                </div>
+                <pre class="text-[11px] text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800 overflow-x-auto font-mono whitespace-pre-wrap">${htmlEsc(textVal)}</pre>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
+function showEditKnowledgeModal(id, key, val) {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Wissenseintrag Bearbeiten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Schlüssel / Begriff (Key)</label>
+          <input type="text" id="kn-edit-key" value="${htmlEsc(key)}" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Inhalt / Fakten (Text)</label>
+          <textarea id="kn-edit-val" rows="4" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500">${htmlEsc(val)}</textarea>
+        </div>
+      </div>
+
+      <div id="kn-edit-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitEditKnowledge('${id}')" class="px-4 py-2 bg-purple-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-purple-500/20">Änderungen Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+async function submitEditKnowledge(id) {
+  var key = document.getElementById("kn-edit-key").value.trim();
+  var valText = document.getElementById("kn-edit-val").value.trim();
+  var errEl = document.getElementById("kn-edit-error");
+  if (errEl) errEl.textContent = "";
+
+  if (!key || !valText) { if (errEl) errEl.textContent = "Schlüssel und Inhalt angeben"; return; }
+
+  var res = await api("/knowledge/" + id, "PATCH", {
+    key: key,
+    value: { content: valText }
+  });
+
+  if (res && res._error) {
+    if (errEl) errEl.textContent = res.detail || "Fehler beim Speichern";
+    return;
+  }
+
+  closeModal();
+  navigate("knowledge");
+}
+
+function showCreateKnowledgeModal() {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+
+  box.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Wissenseintrag Hinzufügen</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Schlüssel / Begriff (Key)</label>
+          <input type="text" id="kn-key" placeholder="z.B. Ethik-Richtlinie-2026" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Inhalt / Fakten (Text)</label>
+          <textarea id="kn-val" rows="4" placeholder="Fakten, Zitate oder Richtlinien eingeben..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Abbrechen</button>
+        <button onclick="submitKnowledge()" class="px-4 py-2 bg-purple-500 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-purple-500/20">Wissen Speichern</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+async function submitKnowledge() {
+  var key = document.getElementById("kn-key").value.trim();
+  var valText = document.getElementById("kn-val").value.trim();
+
+  if (!key || !valText) { alert("Schlüssel und Inhalt angeben"); return; }
+
+  var res = await api("/knowledge", "POST", {
+    key: key,
+    value: { content: valText }
+  });
+
+  if (res) {
+    closeModal();
+    navigate("knowledge");
+  }
+}
+
+async function deleteKnowledge(id) {
+  if (!confirm("Eintrag löschen?")) return;
+  await api("/knowledge/" + id, "DELETE");
+  navigate("knowledge");
+}
+
+function closeModal() {
+  var overlay = document.getElementById("modal-overlay");
+  overlay.classList.add("hidden");
+  overlay.classList.remove("flex");
+}
+
+// Initial Boot
+if (TOKEN) {
+  showApp();
+  navigate("dashboard");
+} else {
+  showTab("login");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "health": {
+    "healthy": "Alle Dienste laufen",
+    "unhealthy": "Einige Dienste sind nicht erreichbar"
+  },
+  "project": {
+    "created": "Projekt erstellt",
+    "not_found": "Projekt nicht gefunden",
+    "deleted": "Projekt geloescht",
+    "list_empty": "Keine Projekte vorhanden"
+  },
+  "debate": {
+    "started": "Debatte gestartet",
+    "stopped": "Debatte gestoppt",
+    "not_found": "Sitzung nicht gefunden",
+    "log_downloaded": "Debatte-Log heruntergeladen",
+    "session_running": "Sitzung laeuft",
+    "session_completed": "Sitzung abgeschlossen"
+  },
+  "agent": {
+    "created": "Agent erstellt",
+    "not_found": "Agent nicht gefunden",
+    "deleted": "Agent geloescht"
+  },
+  "error": {
+    "internal_server": "Interner Serverfehler",
+    "validation_failed": "Eingabevalidierung fehlgeschlagen",
+    "service_unavailable": "Dienst nicht verfuegbar",
+    "debate_already_running": "Eine Debatte laeuft bereits in dieser Sitzung"
+  },
+  "websocket": {
+    "connected": "WebSocket verbunden",
+    "turn_sent": "Drehung gesendet",
+    "moderator_message": "Moderator-Kommentar"
+  }
+}

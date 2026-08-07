@@ -1,0 +1,83 @@
+site_name: Abelard
+site_description: Multi-Agenten-Debattenplattform mit GraphRAG-Gedächtnis, KI-Moderation und Abschlussauswertung
+site_author: Philipp Horn
+copyright: MIT-Lizenz
+
+theme:
+  name: material
+  language: de
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Zu dunklem Design wechseln
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Zu hellem Design wechseln
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - toc.follow
+    - search.highlight
+    - search.suggest
+
+nav:
+  - Start: index.md
+  - Architektur:
+    - Überblick: architecture/overview.md
+    - Debatten-Lebenszyklus: architecture/debate-lifecycle.md
+    - Datenmodell: architecture/data-models.md
+    - Entscheidungsprotokoll: architecture/decision-log.md
+  - Funktionen:
+    - Personas & Auswertung: personas-und-auswertung.md
+    - Automatische Agentenauswahl: automatische-agentenauswahl.md
+    - Globale Agenten: globale-agenten.md
+    - Projekt-Material: uploads.md
+  - Betrieb:
+    - Konfiguration: konfiguration.md
+    - Abhängigkeiten: abhaengigkeiten.md
+    - Deployment: deployment.md
+    - Sicherheit: security.md
+    - Veröffentlichung: veroeffentlichung.md
+  - API-Referenz: api-reference.md
+  - Mitwirken: contributing.md
+
+plugins:
+  - search:
+      lang: de
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - admonition
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.snippets:
+      base_path: ["."]
+  - pymdownx.tabbed:
+      alternate_style: true
+  # Mermaid-Diagramme: ```mermaid-Bloecke werden von mkdocs-material gerendert.
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+      toc_depth: 3

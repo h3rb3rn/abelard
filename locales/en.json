@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Abelard",
+    "subtitle": "Autonomous Multi-Agent Debate Platform",
+    "login": "Sign In",
+    "register": "Register",
+    "logout": "Sign Out",
+    "email": "Email Address",
+    "password": "Password",
+    "name": "Name"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "agents": "1. Agents",
+    "projects": "2. Projects",
+    "debates": "3. Live Arena",
+    "connections": "LLM Connections",
+    "knowledge": "Knowledge / GraphRAG"
+  },
+  "agents": {
+    "title": "Philosophical Agents",
+    "new_agent": "New Agent",
+    "presets": "Quick Presets",
+    "name": "Agent Name",
+    "prompt": "Philosophical Persona Prompt",
+    "provider": "LLM Provider",
+    "model": "Model Name",
+    "save": "Save Agent"
+  },
+  "projects": {
+    "title": "Debate Projects",
+    "new_project": "New Project",
+    "name": "Project Name",
+    "motion": "Philosophical Motion / Topic",
+    "assign_agents": "Assign Agents",
+    "moderator_goal": "Moderator Steering Goal",
+    "moderator_interval": "Moderation Interval (Turns)",
+    "save": "Create Project",
+    "start_debate": "Start Debate"
+  },
+  "debates": {
+    "title": "Live Debate Arena",
+    "stop": "Stop Debate",
+    "open_arena": "Open Arena"
+  },
+  "view": {
+    "theme": "Theme Mode",
+    "dark": "Dark",
+    "light": "Light",
+    "grid": "Grid",
+    "list": "List"
+  }
+}

@@ -1,0 +1,40 @@
+# =============================================================================
+#  Laufzeit-Abhaengigkeiten von Abelard
+#
+#  Diese Liste ist mit pyproject.toml abgeglichen und enthaelt ausschliesslich
+#  Pakete, die tatsaechlich importiert werden. Entwicklungswerkzeuge (pytest,
+#  ruff, mkdocs, bandit) stehen in requirements-dev.txt.
+# =============================================================================
+
+# --- Web-Framework & ASGI-Server ---------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+jinja2==3.1.5                 # Dashboard-Template
+python-multipart==0.0.30      # Datei-Uploads (multipart/form-data)
+
+# --- Datenbank ---------------------------------------------------------------
+sqlalchemy[asyncio]==2.0.36   # ORM, async
+asyncpg==0.30.0               # PostgreSQL-Treiber fuer SQLAlchemy async
+
+# --- Gedaechtnis -------------------------------------------------------------
+neo4j==5.27.0                 # Diskursgraph
+chromadb==0.6.3               # Vektorspeicher fuer semantische Suche
+redis[hiredis]==5.2.1         # Valkey-Client: Kill-Switch, Kosten, Zaehler
+
+# --- HTTP ---------------------------------------------------------------------
+# Alle LLM-Aufrufe laufen ueber httpx gegen OpenAI-kompatible APIs — das
+# offizielle openai-SDK wird bewusst nicht benoetigt.
+httpx==0.28.1
+
+# --- Konfiguration ------------------------------------------------------------
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# --- Dokumenten-Upload: Textextraktion & Bildmetadaten -----------------------
+pypdf==6.14.2
+python-docx==1.2.0
+pillow==12.3.0
+
+# --- Typing -------------------------------------------------------------------
+typing-extensions==4.12.2

@@ -1,0 +1,12 @@
+# Vorlage fuer deployment-spezifische Ergaenzungen.
+# Kopieren nach docker-compose.override.yml und anpassen — die echte Datei
+# wird nicht veroeffentlicht.
+services:
+  app:
+    # Beispiel: externe Dienste, deren DNS im Container-Netz nicht aufloest
+    # extra_hosts:
+    #   - "search.example.org:203.0.113.10"
+
+    # Beispiel: abweichende Portveroeffentlichung
+    # ports:
+    #   - "127.0.0.1:8106:8000"

@@ -1,0 +1,9 @@
+[ratequery]
+enabled = false
+
+[botdetection]
+[botdetection.limiter_redis]
+enabled = false
+
+[botdetection.ip_chain]
+enabled = false
