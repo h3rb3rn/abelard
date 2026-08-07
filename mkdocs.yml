@@ -44,6 +44,7 @@ nav:
     - Personas & Auswertung: personas-und-auswertung.md
     - Automatische Agentenauswahl: automatische-agentenauswahl.md
     - Globale Agenten: globale-agenten.md
+    - Import & Export: agenten-import-export.md
     - Projekt-Material: uploads.md
   - Betrieb:
     - Konfiguration: konfiguration.md

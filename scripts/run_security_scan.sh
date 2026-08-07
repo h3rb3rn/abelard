@@ -35,6 +35,8 @@ COMMON_EXCL=(--exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='__
 header "=== 1/4 Secrets & interne Adressen ==="
 info "Ziel: ${PROJECT_ROOT} (ohne .env — die wird nie veroeffentlicht)"
 
+# Zugangsdaten werden ueberall gesucht — auch in Tests, dort hat kein echter
+# Schluessel etwas verloren.
 SECRET_PATTERNS=(
   "OPENAI-KEY|\\bsk-[A-Za-z0-9_-]{20,}"
   "ANTHROPIC-KEY|\\bsk-ant-[A-Za-z0-9_-]{20,}"
@@ -44,22 +46,33 @@ SECRET_PATTERNS=(
   "PRIVATE-KEY|-----BEGIN[A-Z ]*PRIVATE KEY-----"
   "BEKANNTE-DEFAULTS|[:=][[:space:]]*[\x27\"]?(neo4jpassword|debateengine123|fixed-secret-key-for-jwt-signing)"
   "DB-URI-MIT-PASSWORT|postgresql(\\+asyncpg)?://[^:@[:space:]]+:[^@[:space:]\$\{]{6,}@"
-  "PRIVATE-IP|\\b(10|192\\.168|172\\.(1[6-9]|2[0-9]|3[01]))\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\b"
+)
+
+# Adressen dagegen ohne den Testordner: dort stehen bewusst RFC1918-Beispiele,
+# mit denen die Leck-Erkennung selbst geprueft wird.
+ADDRESS_PATTERNS=(
+  "PRIVATE-IP|\\b(10\\.[0-9]{1,3}|192\\.168|172\\.(1[6-9]|2[0-9]|3[01]))\\.[0-9]{1,3}\\.[0-9]{1,3}\\b"
   "INTERNE-DOMAIN|[a-z0-9-]+\\.(llm-home|entwicklungsserver)\\.[a-z.]+"
 )
 PLACEHOLDER_RE='(change[-_]?me|your[-_]?(key|password|token|secret)|example|placeholder|dummy|xxxxxxxx|\*\*\*|<[^>]*>|\$\{|\$\(|REPLACE|TODO|openssl rand|:\?|:-)'
 
 SECRET_HITS=0
-for entry in "${SECRET_PATTERNS[@]}"; do
-  label="${entry%%|*}"; pattern="${entry#*|}"
-  hits=$(grep -rInE "$pattern" "${COMMON_EXCL[@]}" --exclude='.env' --exclude='*.override.yml' \
-         "${PROJECT_ROOT}" 2>/dev/null | grep -viE "$PLACEHOLDER_RE" || true)
-  if [[ -n "$hits" ]]; then
-    fail "${label}:"
-    echo "$hits" | head -6 | cut -c1-160 | sed 's|^|        |'
-    SECRET_HITS=$((SECRET_HITS + 1))
-  fi
-done
+scan_patterns() {
+  local -n _patterns=$1; shift
+  for entry in "${_patterns[@]}"; do
+    local label="${entry%%|*}" pattern="${entry#*|}" hits
+    hits=$(grep -rInE "$pattern" "${COMMON_EXCL[@]}" --exclude='.env' --exclude='*.override.yml' \
+           "$@" "${PROJECT_ROOT}" 2>/dev/null | grep -viE "$PLACEHOLDER_RE" || true)
+    if [[ -n "$hits" ]]; then
+      fail "${label}:"
+      echo "$hits" | head -6 | cut -c1-160 | sed 's|^|        |'
+      SECRET_HITS=$((SECRET_HITS + 1))
+    fi
+  done
+}
+
+scan_patterns SECRET_PATTERNS
+scan_patterns ADDRESS_PATTERNS --exclude-dir='tests'
 if [[ $SECRET_HITS -eq 0 ]]; then
   info "Keine Secrets oder internen Adressen im Code."
 else

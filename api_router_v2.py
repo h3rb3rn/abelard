@@ -12,7 +12,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel, Field
@@ -23,6 +23,12 @@ from models.db import Agent, DebateSession, KVStore, User, UserLLMEndpoint, Proj
 from config import settings
 from services import document_service
 from services.agent_selection_service import AgentCandidate, select_agents_for_motion
+from services.agent_transfer_service import (
+    ImportResult,
+    ImportValidationError,
+    build_bundle,
+    parse_bundle,
+)
 from services.document_service import UploadValidationError, get_document_index
 from services.llm_client import LLMClient
 from services.user_service import (
@@ -1504,6 +1510,164 @@ async def seed_persona_agents(
         "skipped": len(all_personas) - len(created),
         "created_names": created,
     }
+
+
+@router.get("/agents/export")
+async def export_agents(
+    scope: str = Query("own", pattern="^(all|own|global)$"),
+    portable: bool = Query(True, description="Installationsspezifische Felder weglassen"),
+    current_user: User = Depends(_get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Exportiert Agenten als versioniertes JSON-Buendel.
+
+    ``portable=true`` laesst Modell, Basis-URL und SearXNG-Adresse weg — diese Form
+    ist zum Weitergeben und fuer Seed-Dateien gedacht. API-Schluessel sind nie
+    enthalten, sie haengen am LLM-Endpoint und nicht am Agenten.
+    """
+    if scope == "own":
+        condition = Agent.user_id == current_user.id
+    elif scope == "global":
+        condition = Agent.is_global == True  # noqa: E712
+    else:
+        condition = sa_or(Agent.user_id == current_user.id, Agent.is_global == True)  # noqa: E712
+
+    res = await db.execute(sa_select(Agent).where(condition).order_by(Agent.name))
+
+    # Automatisch erzeugte Projekt-Arbeitskopien sind Ableitungen, keine eigenen
+    # Personas — sie wuerden den Export nur aufblaehen. Gleiche Namen werden
+    # zusammengefasst, damit eine projektgebundene Kopie ihr Original nicht doppelt.
+    agents: list[Agent] = []
+    seen: set[str] = set()
+    for a in res.scalars().all():
+        if (a.skills_json or {}).get(AUTO_MARKER):
+            continue
+        if a.name in seen:
+            continue
+        seen.add(a.name)
+        agents.append(a)
+
+    bundle = build_bundle(agents, portable=portable, source=f"abelard/{scope}")
+
+    filename = f"abelard-agents-{scope}{'-portable' if portable else ''}.json"
+    return Response(
+        content=json.dumps(bundle, ensure_ascii=False, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+async def _import_agent_entries(
+    entries: list[dict[str, Any]],
+    current_user: User,
+    db: AsyncSession,
+    on_conflict: str,
+    make_global: bool,
+) -> ImportResult:
+    """Legt Agenten aus geprueften Eintraegen an."""
+    res = await db.execute(sa_select(Agent).where(Agent.user_id == current_user.id))
+    existing = {a.name: a for a in res.scalars().all()}
+
+    result = ImportResult(created=[], skipped=[], replaced=[], rejected=[])
+    for entry in entries:
+        name = entry["name"]
+        prior = existing.get(name)
+        if prior:
+            if on_conflict == "skip":
+                result.skipped.append(name)
+                continue
+            if on_conflict == "replace":
+                await db.delete(prior)
+                await db.flush()
+                result.replaced.append(name)
+            elif on_conflict == "rename":
+                suffix = 2
+                while f"{name} ({suffix})" in existing:
+                    suffix += 1
+                name = f"{name} ({suffix})"
+                result.created.append(name)
+        else:
+            result.created.append(name)
+
+        agent = Agent(
+            id=uuid.uuid4(),
+            user_id=current_user.id,
+            name=name,
+            system_prompt=entry["system_prompt"],
+            persona_bio=entry.get("persona_bio"),
+            llm_provider=entry.get("llm_provider", "openai"),
+            llm_base_url=entry.get("llm_base_url"),
+            llm_model=entry.get("llm_model"),
+            temperature=entry["temperature"],
+            web_search_enabled=entry["web_search_enabled"],
+            web_search_provider=entry["web_search_provider"],
+            searxng_url=entry.get("searxng_url"),
+            knowledge_graph_enabled=entry["knowledge_graph_enabled"],
+            cache_enabled=entry["cache_enabled"],
+            mcp_enabled=entry["mcp_enabled"],
+            is_global=make_global,
+        )
+        db.add(agent)
+        existing[name] = agent
+
+    await db.flush()
+    return result
+
+
+@router.post("/agents/import")
+async def import_agents(
+    payload: Any = Body(..., description="Export-Buendel oder blanke Agentenliste"),
+    on_conflict: str = Query("skip", pattern="^(skip|rename|replace)$"),
+    make_global: bool = Query(False, description="Importierte Agenten global freigeben (nur Admins)"),
+    current_user: User = Depends(_get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Importiert Agenten aus einem JSON-Buendel.
+
+    ``on_conflict`` steuert das Verhalten bei Namensgleichheit: ``skip`` laesst
+    Vorhandenes unberuehrt, ``rename`` haengt eine Nummer an, ``replace`` ersetzt.
+    """
+    if make_global and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Nur Admins duerfen Agenten global freigeben")
+    try:
+        entries = parse_bundle(payload)
+    except ImportValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    result = await _import_agent_entries(entries, current_user, db, on_conflict, make_global)
+    logger.info(
+        "Agenten-Import fuer %s: %d neu, %d uebersprungen, %d ersetzt",
+        current_user.email, len(result.created), len(result.skipped), len(result.replaced),
+    )
+    return result.as_dict()
+
+
+@router.post("/agents/import/seed")
+async def import_seed_agents(
+    on_conflict: str = Query("skip", pattern="^(skip|rename|replace)$"),
+    make_global: bool = Query(False, description="Importierte Agenten global freigeben (nur Admins)"),
+    current_user: User = Depends(_get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spielt die mitgelieferte Agenten-Sammlung aus ``seeds/agents.json`` ein.
+
+    Gedacht fuer die Erstinbetriebnahme einer neuen Installation.
+    """
+    if make_global and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Nur Admins duerfen Agenten global freigeben")
+
+    seed_file = Path(__file__).parent / "seeds" / "agents.json"
+    if not seed_file.exists():
+        raise HTTPException(status_code=404, detail=f"Seed-Datei nicht gefunden: {seed_file}")
+    try:
+        entries = parse_bundle(json.loads(seed_file.read_text(encoding="utf-8")))
+    except (ImportValidationError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Seed-Datei fehlerhaft: {exc}")
+
+    result = await _import_agent_entries(entries, current_user, db, on_conflict, make_global)
+    logger.info("Seed-Import fuer %s: %d neu, %d uebersprungen", current_user.email,
+                len(result.created), len(result.skipped))
+    return {"source": "seeds/agents.json", **result.as_dict()}
 
 
 @router.get("/agents/{agent_id}", response_model=AgentRead)

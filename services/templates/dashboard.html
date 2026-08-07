@@ -591,6 +591,9 @@ async function renderAgentsPage(el) {
           <button id="seed-personas-btn" onclick="seedPersonaAgents()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-violet-600/30 transition cursor-pointer" title="Legt 50 Wissenschaftler:innen und 7 bekannte fiktive KIs mit Biographie und Werken an">
             🎓 Persona-Bibliothek (57)
           </button>
+          <button onclick="showAgentTransferModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl text-xs transition cursor-pointer" title="Agenten als JSON sichern oder aus einer Datei einspielen">
+            ⇅ Import / Export
+          </button>
           <button onclick="showCreateAgentModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer">
             + Neuer Agent
           </button>
@@ -848,6 +851,132 @@ async function submitEditAgent(id) {
 
   closeModal();
   navigate("agents");
+}
+
+// ---- Agenten: Import und Export ----
+
+function showAgentTransferModal() {
+  var overlay = document.getElementById("modal-overlay");
+  var box = document.getElementById("modal-box");
+  box.innerHTML = `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">⇅ Agenten importieren und exportieren</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div class="text-xs font-bold text-emerald-300">Exportieren</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1">Umfang</label>
+            <select id="exp-scope" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+              <option value="own">Eigene Agenten</option>
+              <option value="global">Global freigegebene</option>
+              <option value="all">Eigene und globale</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1">Form</label>
+            <select id="exp-portable" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+              <option value="true">Portabel — zum Weitergeben</option>
+              <option value="false">Vollständig — mit Modell und URLs</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400">
+          Portabel lässt Modell, Basis-URL und SearXNG-Adresse weg, weil diese auf einer anderen
+          Installation nicht passen. API-Schlüssel sind in keiner Variante enthalten.
+          Automatisch erzeugte Projekt-Arbeitskopien werden übersprungen.
+        </p>
+        <button onclick="exportAgents()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">⬇ Als JSON herunterladen</button>
+      </div>
+
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div class="text-xs font-bold text-sky-300">Importieren</div>
+        <input type="file" id="imp-file" accept=".json,application/json"
+          class="w-full text-xs text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-sky-600 file:text-white file:text-xs file:font-semibold file:cursor-pointer"/>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1">Bei gleichem Namen</label>
+            <select id="imp-conflict" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+              <option value="skip">Überspringen</option>
+              <option value="rename">Umbenennen (2), (3) …</option>
+              <option value="replace">Ersetzen</option>
+            </select>
+          </div>
+          ${isAdmin() ? `
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+              <input type="checkbox" id="imp-global" class="rounded border-slate-700 bg-slate-900 text-violet-500 focus:ring-0"/>
+              <span>global freigeben</span>
+            </label>
+          </div>` : ''}
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="importAgents()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">⬆ Datei einspielen</button>
+          <button onclick="importSeedAgents()" class="px-4 py-2 bg-violet-500/20 hover:bg-violet-500/30 text-violet-200 border border-violet-500/40 rounded-xl text-xs font-semibold cursor-pointer" title="Spielt die mitgelieferte Sammlung aus seeds/agents.json ein">📦 Mitgelieferte Sammlung</button>
+        </div>
+        <div id="imp-result" class="text-xs text-slate-400 min-h-[1rem]"></div>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+function exportAgents() {
+  var scope = document.getElementById("exp-scope").value;
+  var portable = document.getElementById("exp-portable").value;
+  var url = API + "/agents/export?scope=" + scope + "&portable=" + portable + "&token=" + encodeURIComponent(TOKEN);
+  window.open(url, "_blank");
+}
+
+function importResultText(res) {
+  var parts = [res.created + " neu"];
+  if (res.skipped) parts.push(res.skipped + " übersprungen");
+  if (res.replaced) parts.push(res.replaced + " ersetzt");
+  if (res.rejected) parts.push(res.rejected + " abgelehnt");
+  return parts.join(", ");
+}
+
+async function postImport(url, body) {
+  var el = document.getElementById("imp-result");
+  el.innerHTML = '<span class="text-slate-400">Wird eingespielt…</span>';
+  var res = await api(url, "POST", body);
+  if (!res || res._error) {
+    el.innerHTML = '<span class="text-rose-400">Fehlgeschlagen: ' + htmlEsc(res && res.detail ? res.detail : "Unbekannter Fehler") + '</span>';
+    return false;
+  }
+  el.innerHTML = '<span class="text-emerald-400">' + htmlEsc(importResultText(res)) + '</span>';
+  return true;
+}
+
+function importQuery() {
+  var conflict = document.getElementById("imp-conflict").value;
+  var globalCb = document.getElementById("imp-global");
+  return "?on_conflict=" + conflict + (globalCb && globalCb.checked ? "&make_global=true" : "");
+}
+
+async function importAgents() {
+  var input = document.getElementById("imp-file");
+  var el = document.getElementById("imp-result");
+  if (!input.files || input.files.length === 0) {
+    el.innerHTML = '<span class="text-rose-400">Bitte eine JSON-Datei auswählen.</span>';
+    return;
+  }
+  var text = await input.files[0].text();
+  var payload;
+  try {
+    payload = JSON.parse(text);
+  } catch (e) {
+    el.innerHTML = '<span class="text-rose-400">Keine gültige JSON-Datei: ' + htmlEsc(e.message) + '</span>';
+    return;
+  }
+  if (await postImport("/agents/import" + importQuery(), payload)) setTimeout(function() { navigate("agents"); }, 1200);
+}
+
+async function importSeedAgents() {
+  if (await postImport("/agents/import/seed" + importQuery(), {})) setTimeout(function() { navigate("agents"); }, 1200);
 }
 
 async function seedPersonaAgents() {

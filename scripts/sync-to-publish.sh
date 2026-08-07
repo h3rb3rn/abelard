@@ -116,14 +116,14 @@ FINDINGS=0
 
 # Private IPv4-Bereiche (RFC1918) und die bekannten oeffentlichen Deployment-Hosts
 ADDR_PATTERNS=(
-  "PRIVATE-IP|\\b(10|192\\.168|172\\.(1[6-9]|2[0-9]|3[01]))\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\b"
+  "PRIVATE-IP|\\b(10\\.[0-9]{1,3}|192\\.168|172\\.(1[6-9]|2[0-9]|3[01]))\\.[0-9]{1,3}\\.[0-9]{1,3}\\b"
   "INTERNE-DOMAIN|[a-z0-9-]+\\.(llm-home|entwicklungsserver)\\.[a-z.]+"
   "OEFFENTLICHE-IP|\\b84\\.118\\.118\\.[0-9]{1,3}\\b"
 )
 ADDR_SCAN=(--include='*.py' --include='*.yml' --include='*.yaml' --include='*.json'
            --include='*.sh' --include='*.md' --include='*.toml' --include='*.html'
            --include='Dockerfile*')
-ADDR_EXCL=(--exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='__pycache__'
+ADDR_EXCL=(--exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='__pycache__' --exclude-dir='tests'
            --exclude='*.example')
 
 for entry in "${ADDR_PATTERNS[@]}"; do
