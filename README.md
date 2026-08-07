@@ -217,17 +217,17 @@ pip install mkdocs mkdocs-material && mkdocs serve
 
 | Topic | File |
 |-------|------|
-| Architecture & Layering | [`docs/architecture/overview.md`](docs/architecture/overview.md) |
-| Debate Lifecycle | [`docs/architecture/debate-lifecycle.md`](docs/architecture/debate-lifecycle.md) |
-| Data Models (ER, Graph, Vectors) | [`docs/architecture/data-models.md`](docs/architecture/data-models.md) |
-| Configuration | [`docs/konfiguration.md`](docs/konfiguration.md) |
-| Dependencies | [`docs/abhaengigkeiten.md`](docs/abhaengigkeiten.md) |
-| API Reference | [`docs/api-reference.md`](docs/api-reference.md) |
-| Personas & Evaluation | [`docs/personas-und-auswertung.md`](docs/personas-und-auswertung.md) |
-| Automatic Agent Selection | [`docs/automatische-agentenauswahl.md`](docs/automatische-agentenauswahl.md) |
-| Global Agents | [`docs/globale-agenten.md`](docs/globale-agenten.md) |
-| Project Materials / Uploads | [`docs/uploads.md`](docs/uploads.md) |
-| Publishing & Release | [`docs/veroeffentlichung.md`](docs/veroeffentlichung.md) |
+| Architecture & Layering | [`docs/en/architecture/overview.md`](docs/en/architecture/overview.md) |
+| Debate Lifecycle | [`docs/en/architecture/debate-lifecycle.md`](docs/en/architecture/debate-lifecycle.md) |
+| Data Models (ER, Graph, Vectors) | [`docs/en/architecture/data-models.md`](docs/en/architecture/data-models.md) |
+| Configuration | [`docs/en/configuration.md`](docs/en/configuration.md) |
+| Dependencies | [`docs/en/dependencies.md`](docs/en/dependencies.md) |
+| API Reference | [`docs/en/api-reference.md`](docs/en/api-reference.md) |
+| Personas & Evaluation | [`docs/en/personas-and-evaluation.md`](docs/en/personas-and-evaluation.md) |
+| Automatic Agent Selection | [`docs/en/automatic-agent-selection.md`](docs/en/automatic-agent-selection.md) |
+| Global Agents | [`docs/en/global-agents.md`](docs/en/global-agents.md) |
+| Project Materials / Uploads | [`docs/en/uploads.md`](docs/en/uploads.md) |
+| Publishing & Release | [`docs/en/publishing.md`](docs/en/publishing.md) |
 
 ## Security Considerations
 

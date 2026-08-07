@@ -230,17 +230,17 @@ pip install mkdocs mkdocs-material && mkdocs serve
 
 | Thema | Datei |
 |-------|-------|
-| Architektur und Schichten | [`docs/architecture/overview.md`](docs/architecture/overview.md) |
-| Debatten-Lebenszyklus | [`docs/architecture/debate-lifecycle.md`](docs/architecture/debate-lifecycle.md) |
-| Datenmodell (ER, Graph, Vektoren) | [`docs/architecture/data-models.md`](docs/architecture/data-models.md) |
-| Konfiguration | [`docs/konfiguration.md`](docs/konfiguration.md) |
-| Abhängigkeiten | [`docs/abhaengigkeiten.md`](docs/abhaengigkeiten.md) |
-| API-Referenz | [`docs/api-reference.md`](docs/api-reference.md) |
-| Personas und Auswertung | [`docs/personas-und-auswertung.md`](docs/personas-und-auswertung.md) |
-| Automatische Agentenauswahl | [`docs/automatische-agentenauswahl.md`](docs/automatische-agentenauswahl.md) |
-| Globale Agenten | [`docs/globale-agenten.md`](docs/globale-agenten.md) |
-| Projekt-Material | [`docs/uploads.md`](docs/uploads.md) |
-| Veröffentlichung | [`docs/veroeffentlichung.md`](docs/veroeffentlichung.md) |
+| Architektur und Schichten | [`docs/de/architecture/overview.md`](docs/de/architecture/overview.md) |
+| Debatten-Lebenszyklus | [`docs/de/architecture/debate-lifecycle.md`](docs/de/architecture/debate-lifecycle.md) |
+| Datenmodell (ER, Graph, Vektoren) | [`docs/de/architecture/data-models.md`](docs/de/architecture/data-models.md) |
+| Konfiguration | [`docs/de/konfiguration.md`](docs/de/konfiguration.md) |
+| Abhängigkeiten | [`docs/de/abhaengigkeiten.md`](docs/de/abhaengigkeiten.md) |
+| API-Referenz | [`docs/de/api-reference.md`](docs/de/api-reference.md) |
+| Personas und Auswertung | [`docs/de/personas-und-auswertung.md`](docs/de/personas-und-auswertung.md) |
+| Automatische Agentenauswahl | [`docs/de/automatische-agentenauswahl.md`](docs/de/automatische-agentenauswahl.md) |
+| Globale Agenten | [`docs/de/globale-agenten.md`](docs/de/globale-agenten.md) |
+| Projekt-Material | [`docs/de/uploads.md`](docs/de/uploads.md) |
+| Veröffentlichung | [`docs/de/veroeffentlichung.md`](docs/de/veroeffentlichung.md) |
 
 ## Sicherheitshinweise
 
